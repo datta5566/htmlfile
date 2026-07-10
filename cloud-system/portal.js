@@ -43,6 +43,7 @@
   let activeAppCode = "ua_uc_main";
   let syncTimer = null;
   let syncBusy = false;
+  let pendingOtpEmail = "";
 
   function configReady() {
     return Boolean(
@@ -87,6 +88,23 @@
     if (Array.isArray(payload)) return payload.length;
     if (payload && typeof payload === "object") return 1;
     return payload ? 1 : 0;
+  }
+
+  function recordList(payload) {
+    if (Array.isArray(payload)) return payload;
+    if (payload && typeof payload === "object" && Object.keys(payload).length) return [payload];
+    return [];
+  }
+
+  function recordForHash(record) {
+    if (!record || typeof record !== "object" || Array.isArray(record)) return record;
+    const copy = { ...record };
+    delete copy.fileData;
+    delete copy.cloudFilePath;
+    delete copy.cloudFileName;
+    delete copy.cloudFileType;
+    delete copy.cloudFileUploadError;
+    return copy;
   }
 
   function cleanFileName(value) {
@@ -148,13 +166,52 @@
     return prepareRecord(payload, appCode, deviceId);
   }
 
+  async function syncRecordEvents(appCode, storageKey, originalPayload, cloudPayload, deviceId) {
+    const baselineKey = `DK_CLOUD_EVENTS_BASELINE_${currentUser.id}_${appCode}_${storageKey}`;
+    const isBaseline = localStorage.getItem(baselineKey) !== "1";
+    const originalRecords = recordList(originalPayload);
+    const cloudRecords = recordList(cloudPayload);
+    const rows = [];
+
+    for (let index = 0; index < originalRecords.length; index += 1) {
+      const original = originalRecords[index];
+      const cloudRecord = cloudRecords[index] ?? original;
+      const recordHash = await sha256(JSON.stringify(recordForHash(original)));
+      rows.push({
+        user_id: currentUser.id,
+        app_code: appCode,
+        device_id: deviceId,
+        storage_key: storageKey,
+        record_hash: recordHash,
+        record_index: index,
+        record_data: cloudRecord,
+        notify_admin: !isBaseline
+      });
+    }
+
+    if (rows.length) {
+      const { error } = await cloudDb
+        .from("app_events")
+        .upsert(rows, {
+          onConflict: "user_id,app_code,device_id,storage_key,record_hash",
+          ignoreDuplicates: true
+        });
+      if (error) throw error;
+    }
+
+    localStorage.setItem(baselineKey, "1");
+  }
+
   async function syncOne(appCode, storageKey, force = false) {
     const app = APPS[appCode];
     const raw = localStorage.getItem(storageKey) ?? "[]";
     const fingerprint = await sha256(raw);
     const cacheKey = `DK_CLOUD_SYNC_${currentUser.id}_${appCode}_${storageKey}`;
+    const baselineKey = `DK_CLOUD_EVENTS_BASELINE_${currentUser.id}_${appCode}_${storageKey}`;
+    const sameData = localStorage.getItem(cacheKey) === fingerprint;
+    const needsBaseline = localStorage.getItem(baselineKey) !== "1";
 
-    if (!force && localStorage.getItem(cacheKey) === fingerprint) {
+    if (!force && sameData && !needsBaseline) {
       return { changed: false, count: itemCount(safeJson(raw)) };
     }
 
@@ -176,8 +233,9 @@
       }, { onConflict: "user_id,app_code,device_id,storage_key" });
 
     if (error) throw error;
+    await syncRecordEvents(appCode, storageKey, originalPayload, cloudPayload, deviceId);
     localStorage.setItem(cacheKey, fingerprint);
-    return { changed: true, count: itemCount(originalPayload) };
+    return { changed: !sameData, count: itemCount(originalPayload) };
   }
 
   async function syncAll(force = false) {
@@ -265,13 +323,22 @@
     startAutoSync();
   }
 
+  function resetOtpForms() {
+    pendingOtpEmail = "";
+    $("#otpRequestForm").hidden = false;
+    $("#otpVerifyForm").hidden = true;
+    $("#otpCode").value = "";
+    $("#authMessage").textContent = "";
+  }
+
   function showLogin() {
     currentUser = null;
     stopAutoSync();
     portalPanel.hidden = true;
     setupPanel.hidden = true;
     authPanel.hidden = false;
-    setStatus("Login karke cloud apps use karo.", "info");
+    resetOtpForms();
+    setStatus("Email OTP se login karke cloud apps use karo.", "info");
   }
 
   async function init() {
@@ -299,32 +366,58 @@
     });
   }
 
-  $("#loginForm").addEventListener("submit", async (event) => {
+  $("#otpRequestForm").addEventListener("submit", async (event) => {
     event.preventDefault();
-    const email = $("#email").value.trim();
-    const password = $("#password").value;
-    const { error } = await cloudDb.auth.signInWithPassword({ email, password });
-    $("#authMessage").textContent = error ? error.message : "Login successful.";
-  });
-
-  $("#signupBtn").addEventListener("click", async () => {
-    const email = $("#email").value.trim();
-    const password = $("#password").value;
+    const email = $("#email").value.trim().toLowerCase();
     const displayName = $("#displayName").value.trim();
-    if (!email || password.length < 6) {
-      $("#authMessage").textContent = "Valid email aur minimum 6 character password enter karo.";
+    $("#authMessage").textContent = "OTP bheja ja raha hai...";
+
+    const { error } = await cloudDb.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: true,
+        data: { display_name: displayName || email.split("@")[0] }
+      }
+    });
+
+    if (error) {
+      $("#authMessage").textContent = error.message;
       return;
     }
-    const { data, error } = await cloudDb.auth.signUp({
-      email,
-      password,
-      options: { data: { display_name: displayName || email.split("@")[0] } }
-    });
-    $("#authMessage").textContent = error
-      ? error.message
-      : (data.session ? "Account ready." : "Email confirmation link check karo.");
+
+    pendingOtpEmail = email;
+    $("#otpEmailLabel").textContent = email;
+    $("#otpRequestForm").hidden = true;
+    $("#otpVerifyForm").hidden = false;
+    $("#authMessage").textContent = "Email par aaya 6-digit OTP enter karein.";
+    $("#otpCode").focus();
   });
 
+  $("#otpVerifyForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const token = $("#otpCode").value.trim();
+    if (!pendingOtpEmail || !/^\d{6}$/.test(token)) {
+      $("#authMessage").textContent = "Valid 6-digit OTP enter karein.";
+      return;
+    }
+
+    $("#authMessage").textContent = "OTP verify ho raha hai...";
+    const { data, error } = await cloudDb.auth.verifyOtp({
+      email: pendingOtpEmail,
+      token,
+      type: "email"
+    });
+
+    if (error) {
+      $("#authMessage").textContent = error.message;
+      return;
+    }
+
+    $("#authMessage").textContent = "Login successful.";
+    if (data.session) await showPortal(data.session);
+  });
+
+  $("#changeEmailBtn").addEventListener("click", resetOtpForms);
   $("#logoutBtn").addEventListener("click", async () => {
     await syncAll(true);
     await cloudDb.auth.signOut();
