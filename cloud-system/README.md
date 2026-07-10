@@ -11,10 +11,14 @@ Users must open the applications through `cloud-system/index.html`. The portal l
 
 ## What is included
 
-- Email/password accounts for every user
+- Six-digit email OTP login for every user and the administrator
 - Automatic sync approximately every 15 seconds
 - Separate user and device identification
 - Owner-only access to all records
+- Per-record cloud events for new or edited data
+- Live unread notifications in the administrator dashboard
+- Optional browser notifications
+- Owner-only email alerts through a protected Edge Function
 - Search by user, app, barcode, part, unit or record text
 - CSV export and full JSON backup
 - Private upload storage for File Store documents/images
@@ -26,14 +30,16 @@ Users must open the applications through `cloud-system/index.html`. The portal l
 2. Open its SQL Editor.
 3. Run `01-database.sql` completely.
 4. Run `02-private-file-storage.sql` completely.
-5. In Authentication settings, enable Email/Password login.
-6. Add this site URL and redirect URL:
+5. Run `03-notifications.sql` completely.
+6. Configure the Supabase email template to include the six-digit `{{ .Token }}` OTP.
+7. Add this Site URL and redirect URL:
    `https://datta5566.github.io/htmlfile/cloud-system/`
-7. Open `supabase-config.js` and paste the project URL and publishable key.
-8. Open the user portal and create the owner's account.
-9. In the SQL Editor, promote that account once:
-   `update public.profiles set role='admin' where email='OWNER_EMAIL@example.com';`
-10. Open the admin dashboard and log in with the owner account.
+8. Open `supabase-config.js` and paste the project URL and publishable key.
+9. Open the user portal and verify the owner's email by OTP.
+10. In SQL Editor, promote that account once:
+    `update public.profiles set role='admin' where email='OWNER_EMAIL@example.com';`
+11. Follow `OTP-AND-ALERT-SETUP.md` to deploy the email function and create the database webhook.
+12. Open the admin dashboard and sign in with the OTP sent to the owner email.
 
 ## Final links after configuration
 
@@ -43,9 +49,10 @@ Users must open the applications through `cloud-system/index.html`. The portal l
 ## Important security rules
 
 - Use only the browser-safe publishable key in `supabase-config.js`.
-- Never place a secret server key in GitHub or browser JavaScript.
+- Never place a secret server key, mail key or webhook secret in GitHub or browser JavaScript.
 - Keep Row Level Security enabled.
 - Give the `admin` role only to the owner or specifically approved managers.
+- Keep only the owner's address in the `ADMIN_ALERT_EMAIL` Edge Function secret.
 - Users should not use the old direct app links after cloud launch; they should use the central portal.
 - Export regular JSON backups from the admin dashboard.
 
@@ -55,4 +62,4 @@ Cloud storage is scalable but not literally unlimited. The available database, b
 
 ## Existing local data
 
-When a user logs into the portal for the first time, supported records already saved in that browser are uploaded to the cloud. Data stored on another phone/computer will sync when that device logs in through the portal.
+When a user logs into the portal for the first time, supported records already saved in that browser are uploaded to the cloud as a quiet baseline. Those old records do not create an email flood. New or edited records after the baseline create an administrator notification and, when the webhook is configured, one owner email alert.

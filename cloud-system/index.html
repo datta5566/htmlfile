@@ -14,15 +14,19 @@
     </header>
 
     <section class="panel" id="authPanel" hidden>
-      <h2>User Login</h2>
-      <p>Each user signs in with their own account. The administrator can view all submitted records.</p>
-      <form id="loginForm">
+      <h2>Email OTP Login</h2>
+      <p>Email par aaya 6-digit OTP enter karke login karein. Administrator sabhi submitted records dekh sakta hai.</p>
+      <form id="otpRequestForm">
         <label class="field">Name<input id="displayName" autocomplete="name" placeholder="User name"></label>
         <label class="field">Email<input id="email" type="email" autocomplete="email" required></label>
-        <label class="field">Password<input id="password" type="password" autocomplete="current-password" minlength="6" required></label>
+        <button class="btn" type="submit">Send OTP</button>
+      </form>
+      <form id="otpVerifyForm" hidden>
+        <p>OTP sent to <strong id="otpEmailLabel"></strong></p>
+        <label class="field">6-digit OTP<input id="otpCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required></label>
         <div class="buttons">
-          <button class="btn" type="submit">Login</button>
-          <button class="btn secondary" id="signupBtn" type="button">Create Account</button>
+          <button class="btn" type="submit">Verify OTP & Login</button>
+          <button class="btn secondary" id="changeEmailBtn" type="button">Change Email</button>
         </div>
       </form>
       <p class="message" id="authMessage"></p>

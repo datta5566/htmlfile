@@ -27,7 +27,12 @@ jobs:
           test -f cloud-system/index.html
           test -f cloud-system/admin.html
           test -f cloud-system/portal.js
-          test -f cloud-system/admin.js
+          test -f cloud-system/admin-v2.js
+          test -f cloud-system/01-database.sql
+          test -f cloud-system/02-private-file-storage.sql
+          test -f cloud-system/03-notifications.sql
+          test -f cloud-system/OTP-AND-ALERT-SETUP.md
+          test -f supabase/functions/send-admin-alert/index.ts
           find . -name '*.html' -type f -print
 
       - name: Check cloud JavaScript syntax
@@ -35,7 +40,7 @@ jobs:
         run: |
           set -euo pipefail
           node --check cloud-system/portal.js
-          node --check cloud-system/admin.js
+          node --check cloud-system/admin-v2.js
           node --check cloud-system/supabase-config.js
 
       - name: Scan source for security problems
@@ -48,7 +53,7 @@ jobs:
 
           files = [
               p for p in Path('.').rglob('*')
-              if p.suffix in {'.html', '.js'} and '.git' not in p.parts
+              if p.suffix in {'.html', '.js', '.ts'} and '.git' not in p.parts
           ]
 
           blocking_checks = [
@@ -76,12 +81,12 @@ jobs:
           if warnings:
               print('Audit warnings:')
               print('\n'.join(warnings))
-              print('See SECURITY.md and README.md. Client-side login is not server authentication.')
+              print('See SECURITY.md and README.md. Old standalone apps may still contain local browser-only access controls.')
 
           if problems:
               print('Blocking security problems:')
               print('\n'.join(problems))
               sys.exit(1)
 
-          print(f'Security scan passed for {len(files)} HTML/JavaScript files.')
+          print(f'Security scan passed for {len(files)} HTML/JavaScript/TypeScript files.')
           PY
