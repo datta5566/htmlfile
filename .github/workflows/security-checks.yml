@@ -1,0 +1,64 @@
+name: Security checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify HTML application files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f index.html
+          test -f ua-uc/index.html
+          test -f kaizen/index.html
+          find . -name '*.html' -type f -print
+
+      - name: Reject insecure HTTP resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RInE '(src|href)=["'"']http://' --include='*.html' --exclude-dir='.git' .; then
+            echo 'Insecure HTTP resource found. Use HTTPS only.'
+            exit 1
+          fi
+
+      - name: Scan for API keys and access tokens
+        shell: bash
+        run: |
+          set -euo pipefail
+          pattern='(api[_-]?key|client[_-]?secret|private[_-]?key|access[_-]?token)[[:space:]]*[:=][[:space:]]*["'"'][^"'"']{8,}'
+          if grep -RInE "$pattern" --include='*.html' --exclude-dir='.git' .; then
+            echo 'Possible secret found in source code.'
+            exit 1
+          fi
+
+      - name: Reject dynamic code execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RInE '\beval\s*\(|new[[:space:]]+Function\s*\(' --include='*.html' --exclude-dir='.git' .; then
+            echo 'Dynamic code execution found.'
+            exit 1
+          fi
+
+      - name: Report client-side login and storage risks
+        shell: bash
+        run: |
+          echo 'Client-side password patterns:'
+          grep -RInE 'LOGIN_PASSWORD|Default Password|type=["'"']password' --include='*.html' --exclude-dir='.git' . || true
+          echo 'Browser localStorage usage:'
+          grep -RIl 'localStorage' --include='*.html' --exclude-dir='.git' . || true
+          echo 'These are audit warnings. See SECURITY.md and README.md.'
