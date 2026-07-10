@@ -1,7 +1,7 @@
 window.DK_CLOUD_CONFIG = Object.freeze({
-  // Supabase Dashboard > Project Settings > Data API
+  // Browser-safe Supabase configuration
   supabaseUrl: "https://xcmkyltojcmeowxbtsfi.supabase.co",
-  supabasePublishableKey: "PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY",
+  supabasePublishableKey: "sb_publishable_JRRY2VrFwJQ2w5YH3Ct0Ig_J0UxRVJG",
   storageBucket: "dk-app-files",
   syncIntervalMs: 15000
 });
