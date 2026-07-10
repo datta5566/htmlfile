@@ -1,5 +1,7 @@
 # Security Policy
 
+Last reviewed: 10 July 2026
+
 ## Important limitation
 
 These applications are static HTML/JavaScript pages. A password or PIN written and checked only in browser JavaScript is not secure authentication because the source code is visible to anyone who can open the public repository or page.
