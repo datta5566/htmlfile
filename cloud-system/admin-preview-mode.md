@@ -1,1 +1,0 @@
-Browser preview mode is enabled for the owner dashboard. This mode is only for checking the interface. Production cloud access still requires Supabase authentication and database security rules.
