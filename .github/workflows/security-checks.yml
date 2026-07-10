@@ -17,14 +17,26 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Verify HTML application files
+      - name: Verify application files
         shell: bash
         run: |
           set -euo pipefail
           test -f index.html
           test -f ua-uc/index.html
           test -f kaizen/index.html
+          test -f cloud-system/index.html
+          test -f cloud-system/admin.html
+          test -f cloud-system/portal.js
+          test -f cloud-system/admin.js
           find . -name '*.html' -type f -print
+
+      - name: Check cloud JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check cloud-system/portal.js
+          node --check cloud-system/admin.js
+          node --check cloud-system/supabase-config.js
 
       - name: Scan source for security problems
         shell: bash
@@ -35,8 +47,8 @@ jobs:
           import sys
 
           files = [
-              p for p in Path('.').rglob('*.html')
-              if '.git' not in p.parts
+              p for p in Path('.').rglob('*')
+              if p.suffix in {'.html', '.js'} and '.git' not in p.parts
           ]
 
           blocking_checks = [
@@ -71,5 +83,5 @@ jobs:
               print('\n'.join(problems))
               sys.exit(1)
 
-          print(f'Security scan passed for {len(files)} HTML files.')
+          print(f'Security scan passed for {len(files)} HTML/JavaScript files.')
           PY
