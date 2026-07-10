@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>DK Cloud Admin Dashboard</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <header class="top">
+    <div><h1>DK Cloud Admin Dashboard</h1><p>View and export data submitted by every app user</p></div>
+    <div><span id="adminUser"></span> <button class="btn danger" id="logoutBtn" type="button">Logout</button></div>
+  </header>
+
+  <section class="login" id="loginPanel">
+    <h2>Administrator Login</h2>
+    <form id="adminLoginForm">
+      <label class="field">Email<input id="adminEmail" type="email" required autocomplete="email"></label>
+      <label class="field">Password<input id="adminPassword" type="password" required autocomplete="current-password"></label>
+      <button class="btn" type="submit">Open Dashboard</button>
+    </form>
+    <p class="message" id="loginMessage"></p>
+  </section>
+
+  <main class="dashboard" id="dashboard" hidden>
+    <section class="stats">
+      <div class="stat"><span>Users</span><strong id="userCount">0</strong></div>
+      <div class="stat"><span>Applications</span><strong id="appCount">0</strong></div>
+      <div class="stat"><span>Cloud Sections</span><strong id="snapshotCount">0</strong></div>
+      <div class="stat"><span>Total Records</span><strong id="recordCount">0</strong></div>
+    </section>
+
+    <section class="tools">
+      <input id="searchBox" type="search" placeholder="Search user, barcode, part, unit...">
+      <select id="appFilter"><option value="">All Apps</option></select>
+      <select id="userFilter"><option value="">All Users</option></select>
+      <button class="btn" id="refreshBtn" type="button">Refresh</button>
+      <button class="btn secondary" id="exportCsvBtn" type="button">Export CSV</button>
+      <button class="btn secondary" id="exportJsonBtn" type="button">Backup JSON</button>
+      <span class="status" id="visibleCount"></span>
+      <span class="status" id="dashboardStatus"></span>
+    </section>
+
+    <section class="tablebox">
+      <table>
+        <thead><tr><th>Sr</th><th>User</th><th>App</th><th>Device</th><th>Data Section</th><th>Updated</th><th>Record</th><th>Full Data</th><th>File</th></tr></thead>
+        <tbody id="recordsBody"><tr><td class="empty" colspan="9">Login to load cloud records.</td></tr></tbody>
+      </table>
+    </section>
+  </main>
+
+  <section class="modal" id="jsonModal" hidden>
+    <div class="modal-card">
+      <button class="btn danger" id="closeModalBtn" type="button">Close</button>
+      <h2>Complete Record Data</h2>
+      <pre id="jsonContent"></pre>
+    </div>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
