@@ -8,16 +8,23 @@
 </head>
 <body>
   <header class="top">
-    <div><h1>DK Cloud Admin Dashboard</h1><p>View and export data submitted by every app user</p></div>
+    <div><h1>DK Cloud Admin Dashboard</h1><p>View all users data and receive live submission alerts</p></div>
     <div><span id="adminUser"></span> <button class="btn danger" id="logoutBtn" type="button">Logout</button></div>
   </header>
 
   <section class="login" id="loginPanel">
-    <h2>Administrator Login</h2>
-    <form id="adminLoginForm">
-      <label class="field">Email<input id="adminEmail" type="email" required autocomplete="email"></label>
-      <label class="field">Password<input id="adminPassword" type="password" required autocomplete="current-password"></label>
-      <button class="btn" type="submit">Open Dashboard</button>
+    <h2>Administrator Email OTP Login</h2>
+    <form id="adminOtpRequestForm">
+      <label class="field">Admin Email<input id="adminEmail" type="email" required autocomplete="email"></label>
+      <button class="btn" type="submit">Send OTP</button>
+    </form>
+    <form id="adminOtpVerifyForm" hidden>
+      <p>OTP sent to <strong id="adminOtpEmailLabel"></strong></p>
+      <label class="field">6-digit OTP<input id="adminOtpCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required></label>
+      <div class="buttons">
+        <button class="btn" type="submit">Verify OTP & Open Dashboard</button>
+        <button class="btn secondary" id="adminChangeEmailBtn" type="button">Change Email</button>
+      </div>
     </form>
     <p class="message" id="loginMessage"></p>
   </section>
@@ -28,6 +35,18 @@
       <div class="stat"><span>Applications</span><strong id="appCount">0</strong></div>
       <div class="stat"><span>Cloud Sections</span><strong id="snapshotCount">0</strong></div>
       <div class="stat"><span>Total Records</span><strong id="recordCount">0</strong></div>
+      <div class="stat alert-stat"><span>Unread Alerts</span><strong id="unreadCount">0</strong></div>
+    </section>
+
+    <section class="notifications">
+      <div class="notification-head">
+        <h2>Live Notifications <span class="notification-badge" id="notificationBadge">0</span></h2>
+        <div class="buttons">
+          <button class="btn secondary" id="enableBrowserAlertsBtn" type="button">Enable Browser Alerts</button>
+          <button class="btn" id="markAllReadBtn" type="button">Mark All Read</button>
+        </div>
+      </div>
+      <div class="notification-list" id="notificationList"><p class="empty">Login to load notifications.</p></div>
     </section>
 
     <section class="tools">
@@ -59,6 +78,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="supabase-config.js"></script>
-  <script src="admin.js"></script>
+  <script src="admin-v2.js"></script>
 </body>
 </html>
