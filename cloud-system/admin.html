@@ -1,83 +1,55 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="hi">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>DK Cloud Admin Dashboard</title>
-  <link rel="stylesheet" href="admin.css">
+  <title>DK Temporary Admin</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:#07111f;color:#eef6ff;min-height:100vh}header{padding:18px;background:#0d1b2f;border-bottom:1px solid #29415f;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}header h1{margin:0}header p{margin:5px 0 0;color:#a9bed4}.wrap{max-width:1200px;margin:24px auto;padding:0 14px}.card{background:#0d1b2f;border:1px solid #29415f;border-radius:18px;padding:20px}.login{max-width:430px;margin:55px auto}.note{background:#3b2d0c;border:1px solid #a77b16;padding:12px;border-radius:12px}.field{display:grid;gap:6px;margin:12px 0}input,select{padding:11px;border:1px solid #36536f;border-radius:10px;background:#081421;color:#fff}.btn{border:0;border-radius:10px;padding:10px 14px;background:#2563eb;color:#fff;font-weight:800;cursor:pointer}.danger{background:#b42318}.secondary{background:#20354b}.hide{display:none}.stats{display:grid;grid-template-columns:repeat(4,minmax(140px,1fr));gap:12px;margin:15px 0}.stat{background:#0d1b2f;border:1px solid #29415f;border-radius:14px;padding:16px}.stat b{display:block;font-size:28px;margin-top:5px}.tools{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}.tablebox{overflow:auto;border:1px solid #29415f;border-radius:14px}table{width:100%;border-collapse:collapse;min-width:850px}th,td{padding:10px;border-bottom:1px solid #29415f;text-align:left;vertical-align:top}th{background:#162b42;position:sticky;top:0}.muted{color:#a9bed4}.msg{color:#ffd38f;min-height:22px}.json{white-space:pre-wrap;word-break:break-word;max-width:440px}@media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr)}}
+  </style>
 </head>
 <body>
-  <header class="top">
-    <div><h1>DK Cloud Admin Dashboard</h1><p>View all users data and receive live submission alerts</p></div>
-    <div><span id="adminUser"></span> <button class="btn danger" id="logoutBtn" type="button">Logout</button></div>
-  </header>
-
-  <section class="login" id="loginPanel">
-    <h2>Administrator Email OTP Login</h2>
-    <form id="adminOtpRequestForm">
-      <label class="field">Admin Email<input id="adminEmail" type="email" required autocomplete="email"></label>
-      <button class="btn" type="submit">Send OTP</button>
-    </form>
-    <form id="adminOtpVerifyForm" hidden>
-      <p>OTP sent to <strong id="adminOtpEmailLabel"></strong></p>
-      <label class="field">6-digit OTP<input id="adminOtpCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required></label>
-      <div class="buttons">
-        <button class="btn" type="submit">Verify OTP & Open Dashboard</button>
-        <button class="btn secondary" id="adminChangeEmailBtn" type="button">Change Email</button>
-      </div>
-    </form>
-    <p class="message" id="loginMessage"></p>
+<header><div><h1>DK Temporary Admin</h1><p>OTP filhal band — local browser records</p></div><a class="btn secondary" href="index.html">User Apps</a></header>
+<main class="wrap">
+  <section id="login" class="card login">
+    <h2>Administrator Login</h2>
+    <p class="note">Ye temporary admin hai. Sirf isi browser/device me saved records dikhayega.</p>
+    <label class="field">Admin ID<input id="adminId" value="admin" autocomplete="username"></label>
+    <label class="field">Password<input id="adminPw" type="password" autocomplete="current-password"></label>
+    <button class="btn" id="loginBtn">Open Dashboard</button>
+    <p class="muted">ID: <b>admin</b> &nbsp; Password: <b>12345</b></p>
+    <p class="msg" id="loginMsg"></p>
   </section>
 
-  <main class="dashboard" id="dashboard" hidden>
-    <section class="stats">
-      <div class="stat"><span>Users</span><strong id="userCount">0</strong></div>
-      <div class="stat"><span>Applications</span><strong id="appCount">0</strong></div>
-      <div class="stat"><span>Cloud Sections</span><strong id="snapshotCount">0</strong></div>
-      <div class="stat"><span>Total Records</span><strong id="recordCount">0</strong></div>
-      <div class="stat alert-stat"><span>Unread Alerts</span><strong id="unreadCount">0</strong></div>
-    </section>
-
-    <section class="notifications">
-      <div class="notification-head">
-        <h2>Live Notifications <span class="notification-badge" id="notificationBadge">0</span></h2>
-        <div class="buttons">
-          <button class="btn secondary" id="enableBrowserAlertsBtn" type="button">Enable Browser Alerts</button>
-          <button class="btn" id="markAllReadBtn" type="button">Mark All Read</button>
-        </div>
-      </div>
-      <div class="notification-list" id="notificationList"><p class="empty">Login to load notifications.</p></div>
-    </section>
-
-    <section class="tools">
-      <input id="searchBox" type="search" placeholder="Search user, barcode, part, unit...">
-      <select id="appFilter"><option value="">All Apps</option></select>
-      <select id="userFilter"><option value="">All Users</option></select>
-      <button class="btn" id="refreshBtn" type="button">Refresh</button>
-      <button class="btn secondary" id="exportCsvBtn" type="button">Export CSV</button>
-      <button class="btn secondary" id="exportJsonBtn" type="button">Backup JSON</button>
-      <span class="status" id="visibleCount"></span>
-      <span class="status" id="dashboardStatus"></span>
-    </section>
-
-    <section class="tablebox">
-      <table>
-        <thead><tr><th>Sr</th><th>User</th><th>App</th><th>Device</th><th>Data Section</th><th>Updated</th><th>Record</th><th>Full Data</th><th>File</th></tr></thead>
-        <tbody id="recordsBody"><tr><td class="empty" colspan="9">Login to load cloud records.</td></tr></tbody>
-      </table>
-    </section>
-  </main>
-
-  <section class="modal" id="jsonModal" hidden>
-    <div class="modal-card">
-      <button class="btn danger" id="closeModalBtn" type="button">Close</button>
-      <h2>Complete Record Data</h2>
-      <pre id="jsonContent"></pre>
+  <section id="dashboard" class="hide">
+    <p class="note"><strong>Temporary mode:</strong> Dusre mobile/computer ka data yahan nahi dikhega. Cloud admin baad me OTP/database setup ke saath wapas ON hoga.</p>
+    <div class="stats"><div class="stat">Apps<b id="appCount">0</b></div><div class="stat">Sections<b id="sectionCount">0</b></div><div class="stat">Records<b id="recordCount">0</b></div><div class="stat">Kaizen Records<b id="kaizenCount">0</b></div></div>
+    <div class="card">
+      <div class="tools"><input id="search" placeholder="Search record..."><select id="appFilter"><option value="">All Apps</option></select><button class="btn" id="refreshBtn">Refresh</button><button class="btn secondary" id="exportBtn">Backup JSON</button><button class="btn danger" id="logoutBtn">Logout</button></div>
+      <div class="tablebox"><table><thead><tr><th>Sr</th><th>App</th><th>Storage</th><th>Summary</th><th>Full Data</th></tr></thead><tbody id="rows"></tbody></table></div>
     </div>
   </section>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="supabase-config.js"></script>
-  <script src="admin-v2.js"></script>
+</main>
+<script>
+const SOURCES=[
+  {app:'Kaizen',key:'dk_kaizen_online_records_v4'},
+  {app:'UA/UC',key:'whatsapp-safety-saved-records-online-v1'},
+  {app:'Rejection',key:'rejection_records_v2'},
+  {app:'Rejection',key:'rejection_records'},
+  {app:'File Store',key:'FILE_STORE_PRO_RECORDS_V2'},
+  {app:'File Store',key:'FILE_STORE_PRO_COMPLAINTS_V1'}
+];
+const $=id=>document.getElementById(id);let allRows=[];
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
+function parse(raw){if(!raw)return[];try{const x=JSON.parse(raw);return Array.isArray(x)?x:[x]}catch{return[{value:raw}]}}
+function summary(r){if(!r||typeof r!=='object')return String(r??'');const vals=[r.employeeName,r.ideaBy,r.unit,r.kn,r.barcode,r.partName,r.date,r.shift,r.rejection,r.title,r.description].filter(Boolean);return vals.slice(0,5).join(' | ')||'Record';}
+function load(){allRows=[];for(const s of SOURCES){const list=parse(localStorage.getItem(s.key));list.forEach((record,index)=>allRows.push({app:s.app,key:s.key,index,record}));}
+  const apps=[...new Set(allRows.map(x=>x.app))];$('appFilter').innerHTML='<option value="">All Apps</option>'+apps.map(a=>`<option>${esc(a)}</option>`).join('');
+  $('appCount').textContent=apps.length;$('sectionCount').textContent=SOURCES.filter(s=>localStorage.getItem(s.key)).length;$('recordCount').textContent=allRows.length;$('kaizenCount').textContent=allRows.filter(x=>x.app==='Kaizen').length;draw();}
+function draw(){const q=$('search').value.trim().toLowerCase(),app=$('appFilter').value;const data=allRows.filter(x=>(!app||x.app===app)&&(!q||JSON.stringify(x).toLowerCase().includes(q)));$('rows').innerHTML=data.length?data.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.app)}</td><td>${esc(x.key)}</td><td>${esc(summary(x.record))}</td><td class="json">${esc(JSON.stringify(x.record,null,2))}</td></tr>`).join(''):'<tr><td colspan="5" class="muted">Is browser me abhi koi saved record nahi mila.</td></tr>';}
+function download(){const blob=new Blob([JSON.stringify({exportedAt:new Date().toISOString(),records:allRows},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='dk-temporary-admin-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+$('loginBtn').onclick=()=>{if($('adminId').value==='admin'&&$('adminPw').value==='12345'){$('login').className='hide';$('dashboard').className='';load()}else $('loginMsg').textContent='Wrong ID or password';};
+$('search').oninput=draw;$('appFilter').onchange=draw;$('refreshBtn').onclick=load;$('exportBtn').onclick=download;$('logoutBtn').onclick=()=>location.reload();
+</script>
 </body>
 </html>
