@@ -1,1 +1,1901 @@
-<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Kaizen Converter</title><style>*{box-sizing:border-box}body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:linear-gradient(135deg,#050816,#111827);color:#eef4ff;min-height:100vh}.wrap{max-width:1700px;margin:auto;padding:22px}.panel,.card{background:rgba(18,22,42,.8);border:1px solid rgba(255,255,255,.13);border-radius:22px;box-shadow:0 22px 55px #0007}.head{padding:22px;margin-bottom:14px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px}.card{padding:16px}.input,button{width:100%;padding:13px;border-radius:14px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:#fff;font-size:15px}button{border:0;font-weight:900;cursor:pointer;background:linear-gradient(135deg,#7c3aed,#06b6d4);margin-top:8px}.good{background:linear-gradient(135deg,#10b981,#06b6d4)}.warn{background:linear-gradient(135deg,#f59e0b,#fb7185)}.danger{background:linear-gradient(135deg,#ef4444,#f97316)}.muted{color:#94a3b8}.catBox{display:none;margin-top:10px;grid-template-columns:repeat(3,1fr);gap:8px}.catBox.show{display:grid}.chip{width:auto;padding:8px 10px;border-radius:999px;background:#1f2a44;color:#dbeafe;border:1px solid rgba(255,255,255,.16);font-size:12px}.tablebox{overflow:auto;padding:14px}.highlight td{background:rgba(34,197,94,.20)!important}table{width:100%;min-width:1900px;border-collapse:collapse}th,td{padding:11px;border-bottom:1px solid rgba(255,255,255,.1);text-align:left;vertical-align:top}th{position:sticky;top:0;background:#24304d;color:#dbeafe;z-index:2;white-space:nowrap}td{background:rgba(255,255,255,.03)}td[contenteditable]{outline:1px dashed rgba(125,211,252,.25)}.status{padding:12px;color:#93c5fd;font-weight:800}@media(max-width:900px){.grid{grid-template-columns:1fr 1fr}}@media(max-width:600px){.grid{grid-template-columns:1fr}.catBox{grid-template-columns:1fr 1fr}}</style></head><body><div class='wrap'><div class='panel head'><h1>Kaizen To Microsoft Converter</h1><p class='muted'>Multiple Excel files convert • Category search • Save • Download</p></div><div class='grid'><div class='card'><h3>Upload Kaizen Files</h3><input id='excelFile' class='input' type='file' accept='.xlsx,.xls' multiple></div><div class='card searchCard'><h3>Search Record</h3><input id='searchBox' class='input' placeholder='Click for category / type search'><div id='catBox' class='catBox'></div></div><div class='card'><h3>Convert Data</h3><button class='good' onclick='convertFiles()'>Convert Kaizen Files</button></div><div class='card'><h3>Clear Table</h3><button class='danger' onclick='clearTable()'>Clear</button></div></div><div class='grid'><div class='card'><h3>Save Records</h3><button class='warn' onclick='saveData()'>Save Edited Data</button></div><div class='card'><h3>Download Excel</h3><button onclick='downloadExcel()'>Download Excel</button></div><div class='card'><h3>Show Saved Records</h3><button class='warn' onclick='showSaved()'>Show Records</button></div><div class='card'><h3>Delete Saved</h3><button class='danger' onclick='deleteSaved()'>Delete Saved Data</button></div></div><div class='panel tablebox'><table><thead><tr id='thead'></tr></thead><tbody id='tbody'></tbody></table><div id='status' class='status'>Ready...</div></div></div><script src='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js'></script><script>const STORAGE='dk_kaizen_online_records_v4';const CATS=['PRODUCTIVITY','QUALITY','SAFETY','DELIVERY','COST','MORAL','5S','SYSTEM/DOCUMENTS'];const cols=[['slno','SL.NO'],['team','TEAM NAMES'],['kaizenNo','KAIZEN NO'],['ideaBy','KAIZEN IDEA BY'],['area','KAIZEN AREA'],['theme','KAIZEN THEME'],['description','KAIZEN DESCRIPTION'],['feasibility','FEASIBILITY'],['facilitator','FACILITATOR'],['benefit','AREA OF BENEFIT'],['before','BEFORE'],['category','KAIZEN CATEGORY'],['deployment','HORIZONTAL DEPLOYMENT'],['target','TARGET DATE'],['impl','IMPL.DATE'],['status','KAIZEN STATUS'],['physical','AVAILABLE PHYSICALLY'],['soft','SOFT COPY'],['help','KAIZEN DEPLOYMENT HELP']];let data=JSON.parse(localStorage.getItem(STORAGE)||'[]');function init(){thead.innerHTML=cols.map(c=>'<th>'+c[1]+'</th>').join('');catBox.innerHTML='<button class=chip onclick="filterCat(\'\')">ALL RECORDS</button>'+CATS.map(c=>'<button class=chip onclick="filterCat(\''+c+'\')">'+c+'</button>').join('');render()}function today(){return new Date().toLocaleDateString('en-IN')}function norm(v){return String(v||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()}function getCell(s,a){if(s[a]&&s[a].v!=null)return String(s[a].v).trim();try{let p=XLSX.utils.decode_cell(a);for(const m of s['!merges']||[]){if(p.r>=m.s.r&&p.r<=m.e.r&&p.c>=m.s.c&&p.c<=m.e.c){let top=XLSX.utils.encode_cell({r:m.s.r,c:m.s.c});if(s[top]&&s[top].v!=null)return String(s[top].v).trim()}}}catch(e){}return ''}function clean(v){return String(v||'').replace(/\r/g,'\n').replace(/[ \t]+/g,' ').replace(/\n+/g,' ').trim()}function stopClean(v,label){let x=clean(v).replace(label,'').replace(/^[\s:：/-]+/,'');return x.replace(/\b(BENEFITS?|PRODUCTIVITY|QUALITY|SAFETY|DELIVERY|COST|MORAL|5S|SYSTEM\s*\/?\s*DOCUMENTS|KAIZEN\s+STATUS|HORIZONTAL\s+DEPLOYMENT).*$/i,'').trim()}function tick(v){let r=String(v||'').trim();return /[üÜ✓✔☑√✅●]/.test(r)||['yes','y','true','ok','checked','check','tick','right','selected','1'].includes(norm(r))}function rows(sheet){if(!sheet['!ref'])return[];let range=XLSX.utils.decode_range(sheet['!ref']),out=[];for(let r=range.s.r;r<=range.e.r;r++){let row=[];for(let c=range.s.c;c<=range.e.c;c++)row.push(getCell(sheet,XLSX.utils.encode_cell({r,c})));out.push(row)}return out}function selectedCats(sheet){let aliases={PRODUCTIVITY:['productivity','productivity p'],QUALITY:['quality','quality q'],SAFETY:['safety','safety s'],DELIVERY:['delivery','delivery d'],COST:['cost','cost c'],MORAL:['moral','morale','moral m'],'5S':['5s'],'SYSTEM/DOCUMENTS':['system documents','system document','documents']};let found=[];function add(c){if(!found.includes(c))found.push(c)}rows(sheet).forEach(row=>{for(let c=0;c<row.length;c++){let n=norm(row[c]);CATS.forEach(cat=>{if(aliases[cat].some(a=>n.includes(a))){for(let k=c;k<=Math.min(row.length-1,c+4);k++)if(tick(row[k]))add(cat)}})}});return found.join(', ')}function makeRecord(sheet,file){let before=stopClean(getCell(sheet,'A24'),/description\s*\(\s*before\s*improvement\s*\)\s*:?/i);let benefit=stopClean(getCell(sheet,'A25'),/benefits?\s*:?/i);let cat=selectedCats(sheet);return{slno:data.length+1,team:getCell(sheet,'C7')||'Production',kaizenNo:getCell(sheet,'C3')||('KZ-'+String(data.length+1).padStart(3,'0')),ideaBy:getCell(sheet,'C8')||getCell(sheet,'C9')||'Operator',area:getCell(sheet,'C6')||'Shop Floor',theme:getCell(sheet,'C4')||'Safety',description:getCell(sheet,'C5')||'Improvement Activity',feasibility:getCell(sheet,'C10')||'High',facilitator:getCell(sheet,'C11')||'Supervisor',benefit:benefit||'Safety',before:before||'',category:cat||'',deployment:'Yes',target:today(),impl:today(),status:'Implemented',physical:'Yes',soft:'Yes',help:'Required',sourceFile:file.name}}function readFile(file){return new Promise((res,rej)=>{let r=new FileReader();r.onload=e=>{try{let wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});res({file,sheet:wb.Sheets[wb.SheetNames[0]]})}catch(err){rej(err)}};r.onerror=()=>rej(r.error);r.readAsArrayBuffer(file)})}async function convertFiles(){if(typeof XLSX==='undefined'){alert('Internet ON karo. Excel engine load nahi hua.');return}let files=[...excelFile.files];if(!files.length){alert('Select Excel File');return}let ok=0,fail=0;for(const f of files){try{let x=await readFile(f);data.push(makeRecord(x.sheet,x.file));ok++;status.textContent='Converted '+ok+'/'+files.length}catch(e){console.error(e);fail++}}render();status.textContent=ok+' Records Converted'+(fail?' | '+fail+' failed':'')}function render(){tbody.innerHTML='';data.forEach((r,i)=>{r.slno=i+1;let tr=document.createElement('tr');cols.forEach(c=>{let td=document.createElement('td');td.contentEditable='true';td.textContent=r[c[0]]||'';td.oninput=()=>{data[i][c[0]]=td.innerText.trim()};tr.appendChild(td)});tbody.appendChild(tr)});applyFilter()}function saveData(){localStorage.setItem(STORAGE,JSON.stringify(data));status.textContent='Data Saved Successfully'}function showSaved(){data=JSON.parse(localStorage.getItem(STORAGE)||'[]');render();status.textContent=data.length+' Saved Records Loaded'}function deleteSaved(){if(confirm('Saved data delete karna hai?')){data=[];localStorage.removeItem(STORAGE);render();status.textContent='Saved Data Deleted'}}function clearTable(){tbody.innerHTML='';status.textContent='Table Cleared. Saved data safe hai.'}function downloadExcel(){if(!data.length){alert('No Data');return}let exp=data.map((r,i)=>{let o={};cols.forEach(c=>o[c[1]]=c[0]==='slno'?i+1:r[c[0]]||'');return o});let ws=XLSX.utils.json_to_sheet(exp),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Microsoft Format');XLSX.writeFile(wb,'Kaizen_Microsoft_Format.xlsx')}function filterCat(c){searchBox.value=c;applyFilter()}function applyFilter(){let v=norm(searchBox.value),cnt=0;document.querySelectorAll('#tbody tr').forEach(row=>{let match=!v||norm(row.innerText).includes(v);row.style.display=match?'':'none';row.classList.toggle('highlight',!!v&&match);if(match)cnt++});status.textContent=v?cnt+' record(s) highlighted':data.length+' Records Available'}searchBox.addEventListener('focus',()=>catBox.classList.add('show'));searchBox.addEventListener('click',()=>catBox.classList.add('show'));searchBox.addEventListener('keyup',applyFilter);document.addEventListener('click',e=>{if(!document.querySelector('.searchCard').contains(e.target))catBox.classList.remove('show')});window.onload=init;</script></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kaizen Converter Pro V6 Category Search Layout Fixed</title>
+    <style>
+      /* CHANGE NOTE: V6 OS-style premium interface added. Core converter mapping kept same. */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", Arial, sans-serif;
+      }
+      :root {
+        --bg: #070914;
+        --panel: rgba(18, 22, 42, 0.72);
+        --panel2: rgba(255, 255, 255, 0.06);
+        --stroke: rgba(255, 255, 255, 0.13);
+        --txt: #eef4ff;
+        --muted: #94a3b8;
+        --accent: #7c3aed;
+        --accent2: #06b6d4;
+        --good: #22c55e;
+        --warn: #f59e0b;
+        --bad: #ef4444;
+      }
+      body {
+        min-height: 100vh;
+        background:
+          radial-gradient(
+            circle at 20% 10%,
+            rgba(124, 58, 237, 0.28),
+            transparent 35%
+          ),
+          radial-gradient(
+            circle at 85% 25%,
+            rgba(6, 182, 212, 0.22),
+            transparent 30%
+          ),
+          linear-gradient(135deg, #050816, #0f172a 55%, #111827);
+        color: var(--txt);
+        overflow-x: hidden;
+      }
+      body:before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        background-size: 42px 42px;
+        mask-image: linear-gradient(
+          to bottom,
+          rgba(0, 0, 0, 0.8),
+          rgba(0, 0, 0, 0.15)
+        );
+        pointer-events: none;
+      }
+      #bootScreen {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background:
+          radial-gradient(
+            circle at center,
+            rgba(124, 58, 237, 0.22),
+            transparent 38%
+          ),
+          #050816;
+        transition: 0.7s ease;
+      }
+      .hideBoot {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      .boot-card {
+        width: min(680px, 92vw);
+        padding: 34px;
+        border-radius: 30px;
+        background: rgba(9, 12, 28, 0.82);
+        border: 1px solid var(--stroke);
+        box-shadow: 0 0 80px rgba(124, 58, 237, 0.28);
+        backdrop-filter: blur(22px);
+      }
+      .logo-orb {
+        width: 62px;
+        height: 62px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        box-shadow: 0 0 40px rgba(6, 182, 212, 0.45);
+        margin-bottom: 18px;
+        display: grid;
+        place-items: center;
+        font-weight: 900;
+        font-size: 22px;
+      }
+      .boot-title {
+        font-size: 32px;
+        font-weight: 800;
+        letter-spacing: 0.4px;
+      }
+      .boot-sub {
+        color: var(--muted);
+        margin-top: 8px;
+      }
+      .boot-lines {
+        margin: 26px 0 18px;
+        display: grid;
+        gap: 10px;
+        color: #c7d2fe;
+        font-size: 14px;
+      }
+      .boot-lines span {
+        opacity: 0;
+        animation: lineIn 0.45s forwards;
+      }
+      .boot-lines span:nth-child(2) {
+        animation-delay: 0.45s;
+      }
+      .boot-lines span:nth-child(3) {
+        animation-delay: 0.9s;
+      }
+      .boot-lines span:nth-child(4) {
+        animation-delay: 1.35s;
+      }
+      .boot-lines span:nth-child(5) {
+        animation-delay: 1.8s;
+      }
+      @keyframes lineIn {
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+        from {
+          opacity: 0;
+          transform: translateX(-8px);
+        }
+      }
+      .progress {
+        height: 10px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 99px;
+        overflow: hidden;
+        border: 1px solid var(--stroke);
+      }
+      .progress div {
+        height: 100%;
+        width: 0;
+        background: linear-gradient(90deg, var(--accent), var(--accent2));
+        animation: load 3.2s ease forwards;
+        box-shadow: 0 0 20px rgba(6, 182, 212, 0.65);
+      }
+      @keyframes load {
+        to {
+          width: 100%;
+        }
+      }
+      #loginPage {
+        min-height: 100vh;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+      }
+      .login-shell {
+        width: min(980px, 96vw);
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 20px;
+        align-items: stretch;
+      }
+      .hero-panel,
+      .login-box,
+      .header,
+      .card,
+      .table-box,
+      .stat-card {
+        background: var(--panel);
+        border: 1px solid var(--stroke);
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+        backdrop-filter: blur(22px);
+      }
+      .hero-panel {
+        border-radius: 34px;
+        padding: 38px;
+        min-height: 420px;
+        position: relative;
+        overflow: hidden;
+      }
+      .hero-panel:after {
+        content: "";
+        position: absolute;
+        width: 260px;
+        height: 260px;
+        border-radius: 50%;
+        right: -80px;
+        bottom: -90px;
+        background: linear-gradient(
+          135deg,
+          rgba(124, 58, 237, 0.45),
+          rgba(6, 182, 212, 0.25)
+        );
+        filter: blur(2px);
+      }
+      .hero-panel h1 {
+        font-size: 46px;
+        line-height: 1.05;
+        margin: 20px 0 16px;
+        max-width: 560px;
+      }
+      .hero-panel p {
+        color: var(--muted);
+        font-size: 17px;
+        line-height: 1.6;
+        max-width: 560px;
+      }
+      .chip {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        padding: 10px 14px;
+        border: 1px solid var(--stroke);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.05);
+        color: #c4b5fd;
+        font-weight: 700;
+      }
+      .login-box {
+        border-radius: 34px;
+        padding: 32px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .login-box h2 {
+        font-size: 30px;
+        margin-bottom: 8px;
+      }
+      .login-box .hint {
+        color: var(--muted);
+        margin-bottom: 24px;
+      }
+      .input-box {
+        margin-bottom: 16px;
+      }
+      .input-box label {
+        display: block;
+        color: #cbd5e1;
+        margin-bottom: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+      .input-box input,
+      input[type="text"],
+      input[type="file"] {
+        width: 100%;
+        padding: 14px 15px;
+        border: 1px solid var(--stroke);
+        border-radius: 15px;
+        outline: none;
+        font-size: 15px;
+        color: var(--txt);
+        background: rgba(255, 255, 255, 0.08);
+      }
+      input[type="file"] {
+        cursor: pointer;
+      }
+      input::file-selector-button {
+        border: 0;
+        border-radius: 10px;
+        padding: 9px 12px;
+        margin-right: 10px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: white;
+        font-weight: 800;
+        cursor: pointer;
+      }
+      .login-btn,
+      .btn {
+        width: 100%;
+        padding: 14px;
+        border: 0;
+        border-radius: 15px;
+        color: white;
+        font-size: 15px;
+        font-weight: 900;
+        cursor: pointer;
+        transition: 0.2s ease;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        box-shadow: 0 12px 28px rgba(124, 58, 237, 0.25);
+      }
+      .btn:hover,
+      .login-btn:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.08);
+      }
+      .btn:active,
+      .login-btn:active,
+      button.clicked {
+        transform: scale(0.96);
+        filter: brightness(1.25);
+        box-shadow: 0 0 0 4px rgba(125, 211, 252, 0.35);
+      }
+      #error {
+        margin-top: 14px;
+        text-align: center;
+        color: #fca5a5;
+        font-weight: 700;
+      }
+      #app {
+        display: none;
+        padding: 22px;
+        position: relative;
+        z-index: 1;
+      }
+      .os-layout {
+        max-width: 1800px;
+        margin: 0 auto;
+      }
+      .header {
+        border-radius: 28px;
+        padding: 24px;
+        margin-bottom: 18px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 18px;
+      }
+      .header h1 {
+        font-size: 30px;
+      }
+      .header p {
+        color: var(--muted);
+        margin-top: 7px;
+      }
+      .version {
+        padding: 10px 14px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: rgba(255, 255, 255, 0.06);
+        color: #a5f3fc;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 18px;
+      }
+      .stat-card {
+        border-radius: 24px;
+        padding: 18px;
+      }
+      .stat-card small {
+        color: var(--muted);
+        font-weight: 700;
+      }
+      .stat-card strong {
+        display: block;
+        font-size: 30px;
+        margin-top: 8px;
+      }
+      .top-tools {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+      .card {
+        border-radius: 24px;
+        padding: 16px;
+      }
+      .card h3 {
+        margin-bottom: 10px;
+        font-size: 15px;
+        color: #dbeafe;
+      }
+      .convert {
+        background: linear-gradient(135deg, #10b981, #06b6d4);
+      }
+      .save {
+        background: linear-gradient(135deg, #f59e0b, #fb7185);
+      }
+      .download {
+        background: linear-gradient(135deg, #2563eb, #7c3aed);
+      }
+      .clear {
+        background: linear-gradient(135deg, #ef4444, #f97316);
+      }
+      .table-box {
+        border-radius: 28px;
+        padding: 18px;
+        overflow: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        min-width: 4700px;
+      }
+      th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: rgba(31, 41, 75, 0.95);
+        color: #dbeafe;
+        padding: 13px;
+        border-bottom: 1px solid var(--stroke);
+        white-space: nowrap;
+        font-size: 13px;
+      }
+      td {
+        padding: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.025);
+        min-width: 115px;
+        vertical-align: top;
+        color: #eef4ff;
+      }
+      td[contenteditable="true"] {
+        outline: 1px dashed rgba(125, 211, 252, 0.25);
+        cursor: text;
+      }
+      tr:hover td {
+        background: rgba(124, 58, 237, 0.08);
+      }
+      .status {
+        margin-top: 14px;
+        font-weight: 800;
+        color: #93c5fd;
+      }
+
+      /* CHANGE NOTE: Category options are now inside the Search Record card, not absolute overlay. This keeps them clearly above the Download Excel button instead of hiding behind it. */
+      .search-card {
+        position: relative;
+        overflow: visible;
+      }
+      .search-wrap {
+        position: relative;
+      }
+      .category-options {
+        display: none;
+        position: static;
+        margin-top: 10px;
+        width: 100%;
+        padding: 12px;
+        border-radius: 18px;
+        background: rgba(9, 12, 28, 0.96);
+        border: 1px solid var(--stroke);
+        box-shadow: 0 14px 34px rgba(0, 0, 0, 0.36);
+        backdrop-filter: blur(18px);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .search-card.open .category-options {
+        display: grid;
+      }
+      .cat-option {
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 12px;
+        padding: 10px 8px;
+        background: rgba(255, 255, 255, 0.07);
+        color: #e0f2fe;
+        font-weight: 800;
+        font-size: 12px;
+        cursor: pointer;
+        transition: 0.18s ease;
+        text-align: center;
+      }
+      .cat-option:hover,
+      .cat-option.active {
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: #fff;
+        transform: translateY(-1px);
+      }
+      .highlight-row td {
+        background: rgba(34, 197, 94, 0.18) !important;
+        border-top: 1px solid rgba(34, 197, 94, 0.35);
+        border-bottom: 1px solid rgba(34, 197, 94, 0.35);
+      }
+      mark.search-hit {
+        background: rgba(250, 204, 21, 0.38);
+        color: #fff;
+        border-radius: 5px;
+        padding: 0 3px;
+      }
+
+      @media (max-width: 1000px) {
+        .login-shell {
+          grid-template-columns: 1fr;
+        }
+        .hero-panel {
+          min-height: auto;
+        }
+        .stats,
+        .top-tools {
+          grid-template-columns: 1fr 1fr;
+        }
+        .header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+      @media (max-width: 650px) {
+        .stats,
+        .top-tools {
+          grid-template-columns: 1fr;
+        }
+        .hero-panel h1 {
+          font-size: 34px;
+        }
+        .category-options {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="bootScreen">
+      <div class="boot-card">
+        <div class="logo-orb">K</div>
+        <div class="boot-title">Kaizen Converter Pro</div>
+        <div class="boot-sub">Modern secure workspace loading...</div>
+        <div class="boot-lines">
+          <span>[OK] Loading Excel conversion engine</span
+          ><span>[OK] Connecting local saved records</span
+          ><span>[OK] Checking V8 mapping rules</span
+          ><span>[OK] Preparing editable Microsoft table</span
+          ><span>[OK] System ready</span>
+        </div>
+        <div class="progress"><div></div></div>
+      </div>
+    </div>
+    <div id="loginPage">
+      <div class="login-shell">
+        <div class="hero-panel">
+          <span class="chip">● Premium OS Workspace</span>
+          <h1>Kaizen records, clean format, faster control.</h1>
+          <p>
+            Upload Kaizen Excel files, convert them into Microsoft format, edit
+            every cell, save records locally, and download final Excel with a
+            modern professional interface.
+          </p>
+        </div>
+        <div class="login-box">
+          <h2>Sign in</h2>
+          <div class="hint">Authorized user access only</div>
+          <div class="input-box">
+            <label>User ID</label
+            ><input
+              type="text"
+              id="userId"
+              value="Mr DK"
+              placeholder="Mr DK"
+              readonly
+            />
+          </div>
+          <div class="input-box">
+            <label>Password</label
+            ><input
+              type="password"
+              id="password"
+              placeholder="Enter Password"
+              autocomplete="off"
+            />
+          </div>
+          <button class="login-btn" onclick="login()">Login</button>
+          <div id="error"></div>
+        </div>
+      </div>
+    </div>
+    <div id="app">
+      <div class="os-layout">
+        <div class="header">
+          <div>
+            <h1>Kaizen To Microsoft Converter</h1>
+            <p>V8 direct mapping with premium modern interface</p>
+          </div>
+          <div class="version">Version 8.0</div>
+        </div>
+        <div class="stats">
+          <div class="stat-card">
+            <small>Total Records</small><strong id="statTotal">0</strong>
+          </div>
+          <div class="stat-card">
+            <small>Implemented</small><strong id="statImplemented">0</strong>
+          </div>
+          <div class="stat-card">
+            <small>In Process / Pending</small
+            ><strong id="statPending">0</strong>
+          </div>
+          <div class="stat-card">
+            <small>Saved Records</small><strong id="statSaved">0</strong>
+          </div>
+        </div>
+        <div class="top-tools">
+          <div class="card">
+            <h3>Upload Kaizen Files</h3>
+            <input
+              type="file"
+              id="excelFile"
+              accept=".xlsx,.xls"
+              multiple
+            /><small style="display: block; margin-top: 8px; color: #94a3b8"
+              >You can select multiple files</small
+            >
+          </div>
+          <div class="card search-card" id="searchCard">
+            <h3>Search Record</h3>
+            <div class="search-wrap">
+              <input
+                type="text"
+                id="searchBox"
+                placeholder="Click here for category options..."
+              />
+              <div class="category-options" id="categoryOptions">
+                <button
+                  type="button"
+                  class="cat-option active"
+                  data-category="ALL"
+                >
+                  ALL RECORDS</button
+                ><button
+                  type="button"
+                  class="cat-option"
+                  data-category="PRODUCTIVITY"
+                >
+                  PRODUCTIVITY</button
+                ><button
+                  type="button"
+                  class="cat-option"
+                  data-category="QUALITY"
+                >
+                  QUALITY</button
+                ><button
+                  type="button"
+                  class="cat-option"
+                  data-category="SAFETY"
+                >
+                  SAFETY</button
+                ><button
+                  type="button"
+                  class="cat-option"
+                  data-category="DELIVERY"
+                >
+                  DELIVERY</button
+                ><button type="button" class="cat-option" data-category="COST">
+                  COST</button
+                ><button type="button" class="cat-option" data-category="MORAL">
+                  MORAL</button
+                ><button type="button" class="cat-option" data-category="5S">
+                  5S</button
+                ><button
+                  type="button"
+                  class="cat-option"
+                  data-category="SYSTEM/DOCUMENTS"
+                >
+                  SYSTEM/DOCUMENTS
+                </button>
+              </div>
+            </div>
+            <small style="display: block; margin-top: 8px; color: #94a3b8"
+              >Click search box and select category</small
+            >
+          </div>
+          <div class="card">
+            <h3>Convert Data</h3>
+            <button class="btn convert" id="convertBtn">
+              Convert Kaizen Files
+            </button>
+          </div>
+          <div class="card">
+            <h3>Clear Table</h3>
+            <button class="btn clear" id="clearBtn">Clear</button>
+          </div>
+        </div>
+        <div class="top-tools">
+          <div class="card">
+            <h3>Save Records</h3>
+            <button class="btn save" id="saveBtn">Save Edited Data</button>
+          </div>
+          <div class="card">
+            <h3>Download Excel</h3>
+            <button class="btn download" id="downloadBtn">
+              Download Excel
+            </button>
+          </div>
+          <div class="card">
+            <h3>Show Saved Records</h3>
+            <button class="btn save" id="showBtn">Show Records</button>
+          </div>
+          <div class="card">
+            <h3>Delete Saved</h3>
+            <button class="btn clear" id="deleteSavedBtn">
+              Delete Saved Data
+            </button>
+          </div>
+        </div>
+        <div class="table-box">
+          <table id="previewTable">
+            <thead>
+              <tr>
+                <th>DATE</th>
+                <th>PLANT</th>
+                <th>DEPARTMENT</th>
+                <th>EMPLOYEE ID</th>
+                <th>NAME</th>
+                <th>KAIZEN THEME</th>
+                <th>KAIZEN DESCRIPTION</th>
+                <th>KAIZEN AREA</th>
+                <th>KAIZEN TEAM</th>
+                <th>BEFORE IMPROVEMENT</th>
+                <th>AFTER IMPROVEMENT</th>
+                <th>BENEFITS</th>
+                <th>CATEGORY</th>
+                <th>STATUS</th>
+                <th>TEAM NAMES</th>
+                <th>KAIZEN NO</th>
+                <th>KAIZEN IDEA BY</th>
+                <th>KAIZEN AREA</th>
+                <th>KAIZEN THEME</th>
+                <th>KAIZEN DESCRIPTION</th>
+                <th>FEASIBILITY</th>
+                <th>FACILITATOR</th>
+                <th>AREA OF BENEFIT</th>
+                <th>BEFORE</th>
+                <th>AFTER</th>
+                <th>KAIZEN CATEGORY</th>
+                <th>HORIZONTAL DEPLOYMENT</th>
+                <th>TARGET DATE</th>
+                <th>IMPL.DATE</th>
+                <th>KAIZEN STATUS</th>
+                <th>AVAILABLE PHYSICALLY</th>
+                <th>SOFT COPY</th>
+                <th>KAIZEN DEPLOYMENT HELP</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+          <div class="status" id="status">Ready...</div>
+        </div>
+      </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+      /* CHANGE NOTE: storage name changed so old image-column data does not disturb this clean version. */
+      const STORAGE_KEY = "kaizen_converter_records_v8_combined_v2";
+      const LOCK_KEY = "kaizen_converter_original_file_lock_v6";
+      let convertedData = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      function persistLocal() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(convertedData));
+      }
+      const columns = [
+        "date",
+        "plant",
+        "department",
+        "employeeId",
+        "name",
+        "theme",
+        "description",
+        "area",
+        "team",
+        "before",
+        "after",
+        "benefit",
+        "category",
+        "status",
+        "oldTeam",
+        "oldKaizenNo",
+        "oldIdeaBy",
+        "oldArea",
+        "oldTheme",
+        "oldDescription",
+        "oldFeasibility",
+        "oldFacilitator",
+        "oldBenefit",
+        "oldBefore",
+        "oldAfter",
+        "oldCategory",
+        "oldDeployment",
+        "oldTarget",
+        "oldImpl",
+        "oldStatus",
+        "oldPhysical",
+        "oldSoft",
+        "oldHelp",
+      ];
+      const SEARCH_CATEGORIES = [
+        "PRODUCTIVITY",
+        "QUALITY",
+        "SAFETY",
+        "DELIVERY",
+        "COST",
+        "MORAL",
+        "5S",
+        "SYSTEM/DOCUMENTS",
+      ];
+      let activeSearchCategory = "";
+      /* CHANGE NOTE: Login password fixed as requested. */
+      function appPassword() {
+        return "12345";
+      }
+      /* CHANGE NOTE: Run fix - strict file-location lock removed because it can stop the app when file is opened from a different folder/download location. */
+      function checkOriginalFileLock() {
+        return true;
+      }
+      function login() {
+        let user = document.getElementById("userId").value.trim();
+        let pass = document.getElementById("password").value;
+        if (!checkOriginalFileLock()) {
+          document.getElementById("error").innerHTML =
+            "File lock active. Original location se hi run karo.";
+          return;
+        }
+        if (user === "Mr DK" && pass === appPassword()) {
+          document.getElementById("loginPage").style.display = "none";
+          document.getElementById("app").style.display = "block";
+          renderTable();
+        } else document.getElementById("error").innerHTML = "Invalid Login";
+      }
+      function today() {
+        return new Date().toLocaleDateString("en-IN");
+      }
+      function getCell(sheet, addr) {
+        if (sheet[addr] && sheet[addr].v != null)
+          return String(sheet[addr].v).trim();
+        try {
+          const pos = XLSX.utils.decode_cell(addr);
+          const merges = sheet["!merges"] || [];
+          for (const m of merges) {
+            if (
+              pos.r >= m.s.r &&
+              pos.r <= m.e.r &&
+              pos.c >= m.s.c &&
+              pos.c <= m.e.c
+            ) {
+              const top = XLSX.utils.encode_cell({ r: m.s.r, c: m.s.c });
+              if (sheet[top] && sheet[top].v != null)
+                return String(sheet[top].v).trim();
+            }
+          }
+        } catch (e) {}
+        return "";
+      }
+      function nextKaizenNo() {
+        return "KZ-" + String(convertedData.length + 1).padStart(3, "0");
+      }
+      function normText(v) {
+        return String(v || "")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, " ")
+          .trim();
+      }
+      function cellAddr(r, c) {
+        return XLSX.utils.encode_cell({ r: r, c: c });
+      }
+      function cleanInfoText(v) {
+        return String(v || "")
+          .replace(/\r\n/g, "\n")
+          .replace(/\r/g, "\n")
+          .replace(/[ \t]+/g, " ")
+          .trim();
+      }
+      function isLabelOnly(v, list) {
+        let n = normText(v);
+        return list.some(
+          (l) => n === l || n === "kaizen " + l || n === "" + l + " kaizen",
+        );
+      }
+      function isGenericIgnored(v) {
+        let n = normText(v);
+        const ignore = [
+          "before",
+          "after",
+          "photo",
+          "image",
+          "picture",
+          "pic",
+          "old condition",
+          "new condition",
+          "present condition",
+          "current condition",
+          "kaizen before",
+          "kaizen after",
+          "before image",
+          "after image",
+          "before photo",
+          "after photo",
+        ];
+        return ignore.includes(n);
+      }
+      function labelHit(text, labels) {
+        let n = normText(text);
+        return labels.some((l) => n === l || n.includes(l));
+      }
+      function getRange(sheet) {
+        if (!sheet["!ref"]) return null;
+        return XLSX.utils.decode_range(sheet["!ref"]);
+      }
+      function nonEmptyCells(sheet) {
+        const range = getRange(sheet);
+        if (!range) return [];
+        let cells = [];
+        for (let r = range.s.r; r <= range.e.r; r++) {
+          for (let c = range.s.c; c <= range.e.c; c++) {
+            let addr = cellAddr(r, c),
+              v = getCell(sheet, addr);
+            if (v) cells.push({ r, c, addr, v, n: normText(v) });
+          }
+        }
+        return cells;
+      }
+      function findLabelCells(sheet, labels) {
+        return nonEmptyCells(sheet).filter((x) => labelHit(x.v, labels));
+      }
+      function inlineInfoFromLabel(value, labels) {
+        let raw = String(value || "").trim();
+        for (const l of labels) {
+          const re = new RegExp(
+            "^\\s*(kaizen\\s*)?" +
+              l.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") +
+              "\\s*[:：\-–—]?\\s*(.+)$",
+            "i",
+          );
+          const m = raw.match(re);
+          if (m && m[2] && normText(m[2]) !== normText(l))
+            return cleanInfoText(m[2]);
+        }
+        return "";
+      }
+      function cleanSectionValue(v, ownLabels, otherLabels) {
+        let t = cleanInfoText(v);
+        if (!t) return "";
+        if (labelHit(t, otherLabels)) return "";
+        if (isGenericIgnored(t)) return "";
+        let inline = inlineInfoFromLabel(t, ownLabels);
+        if (inline) return inline;
+        if (isLabelOnly(t, ownLabels)) return "";
+        return t;
+      }
+      function nearestStopRow(all, startRow, maxRow) {
+        const stopWords = [
+          "horizontal deployment",
+          "target date",
+          "impl date",
+          "implementation date",
+          "kaizen status",
+          "available physically",
+          "soft copy",
+          "deployment help",
+          "feasibility",
+          "facilitator",
+          "area of benefit",
+        ];
+        let stops = all
+          .filter(
+            (x) =>
+              x.r > startRow &&
+              x.r <= maxRow &&
+              stopWords.some((w) => x.n.includes(w)),
+          )
+          .map((x) => x.r);
+        return stops.length ? Math.min(...stops) - 1 : maxRow;
+      }
+      function collectBoxText(sheet, r1, c1, r2, c2, ownLabels, otherLabels) {
+        const range = getRange(sheet);
+        if (!range) return "";
+        r1 = Math.max(range.s.r, r1);
+        c1 = Math.max(range.s.c, c1);
+        r2 = Math.min(range.e.r, r2);
+        c2 = Math.min(range.e.c, c2);
+        let lines = [];
+        for (let r = r1; r <= r2; r++) {
+          let row = [];
+          for (let c = c1; c <= c2; c++) {
+            let v = getCell(sheet, cellAddr(r, c));
+            let cleaned = cleanSectionValue(v, ownLabels, otherLabels);
+            if (cleaned) row.push(cleaned);
+          }
+          if (row.length) lines.push(row.join(" "));
+        }
+        // duplicate text remove, but original wording keep as-is
+        let seen = new Set(),
+          out = [];
+        lines.forEach((x) => {
+          let k = x.trim();
+          if (k && !seen.has(k)) {
+            seen.add(k);
+            out.push(k);
+          }
+        });
+        return out.join("\n");
+      }
+      function textMatchesAnyPattern(raw, patterns) {
+        return patterns.some((pattern) =>
+          new RegExp(pattern, "i").test(String(raw || "")),
+        );
+      }
+      function extractTextAfterDescriptionLabel(raw, labelPatterns) {
+        raw = String(raw || "").trim();
+        for (const pattern of labelPatterns) {
+          const re = new RegExp(
+            "^\\s*" + pattern + "\\s*[:：\\-–—]?\\s*(.*)$",
+            "is",
+          );
+          const m = raw.match(re);
+          if (m) return cleanInfoText(m[1] || "");
+        }
+        return "";
+      }
+      function findDescriptionLabelCells(sheet, labelPatterns) {
+        const cells = nonEmptyCells(sheet);
+        return cells.filter((cell) =>
+          textMatchesAnyPattern(cell.v, labelPatterns),
+        );
+      }
+      function uniqueLines(lines) {
+        let seen = new Set(),
+          out = [];
+        lines.forEach((x) => {
+          x = cleanInfoText(x);
+          if (!x) return;
+          const k = normText(x);
+          if (!seen.has(k)) {
+            seen.add(k);
+            out.push(x);
+          }
+        });
+        return out;
+      }
+
+      function trimAtKaizenStopText(text) {
+        let t = cleanInfoText(text);
+        if (!t) return "";
+        // Remove anything after next fixed headings. This is important when Excel has many headings in one merged/text cell.
+        const stopRegex =
+          /\s*(?:\/|\n|\r|\t| {2,})?\s*(QUALITY\s*\(\s*Q\s*\)|SAFETY\s*\(\s*S\s*\)|MORAL\s*\(\s*M\s*\)|MORALE\s*\(\s*M\s*\)|PRODUCTIVITY\s*\(\s*P\s*\)|COST\s*\(?\s*'?\s*C\s*\)?|BENEFITS?\s*:|IMPLEMENTED\b|IN\s*PROCESS\s*\(?\s*TARGET\s*DATE\s*\)?|INPROCESS\s*\(?\s*TARGET\s*DATE\s*\)?|REVIEW\s*&\s*APPROVALS|KAIZEN\s*CATEGORY\s*:|KAIZEN\s*STATUS\s*:|HORIZONTAL\s*DEPLOYMENT|TARGET\s*DATE|IMPL\.?\s*DATE|AVAILABLE\s*PHYSICALLY|SOFT\s*COPY|KAIZEN\s*DEPLOYMENT\s*HELP)\b[\s\S]*$/i;
+        t = t.replace(stopRegex, "").trim();
+        t = t.replace(/\s*\/\s*$/, "").trim();
+        return t;
+      }
+
+      function isStopSectionText(raw, ownPatterns, otherPatterns) {
+        const v = String(raw || "");
+        const n = normText(v);
+        if (!n) return false;
+        if (textMatchesAnyPattern(v, otherPatterns)) return true;
+        const ownInline = extractTextAfterDescriptionLabel(v, ownPatterns);
+        if (textMatchesAnyPattern(v, ownPatterns) && !ownInline) return true;
+        const stopWords = [
+          "root cause",
+          "counter measure",
+          "target date",
+          "implementation date",
+          "impl date",
+          "kaizen status",
+          "horizontal deployment",
+          "area of benefit",
+          "feasibility",
+          "facilitator",
+          "available physically",
+          "soft copy",
+          "kaizen deployment help",
+          "safety",
+          "quality",
+          "productivity",
+          "cost",
+          "moral",
+          "morale",
+          "quality q",
+          "safety s",
+          "moral m",
+          "productivity p",
+          "cost c",
+          "benefit",
+          "benefits",
+          "implemented",
+          "inprocess",
+          "in process",
+          "review approvals",
+          "review and approvals",
+          "kaizen category",
+          "before image",
+          "after image",
+          "photo",
+          "photograph",
+          "image",
+          "picture",
+        ];
+        return stopWords.some((w) => n === w || n.includes(w));
+      }
+      function collectDescriptionBlock(
+        sheet,
+        labelCell,
+        ownPatterns,
+        stopPatterns,
+      ) {
+        const range = getRange(sheet);
+        if (!range) return "";
+
+        const inline = extractTextAfterDescriptionLabel(
+          labelCell.v,
+          ownPatterns,
+        );
+        if (inline && !textMatchesAnyPattern(inline, stopPatterns))
+          return trimAtKaizenStopText(inline);
+
+        let labelEndCol = labelCell.c;
+        (sheet["!merges"] || []).forEach((m) => {
+          if (
+            labelCell.r >= m.s.r &&
+            labelCell.r <= m.e.r &&
+            labelCell.c >= m.s.c &&
+            labelCell.c <= m.e.c
+          ) {
+            labelEndCol = Math.max(labelEndCol, m.e.c);
+          }
+        });
+
+        // same row right side
+        let rightParts = [];
+        for (
+          let c = labelEndCol + 1;
+          c <= Math.min(range.e.c, labelEndCol + 14);
+          c++
+        ) {
+          const v = getCell(sheet, cellAddr(labelCell.r, c));
+          if (!v) continue;
+          if (isStopSectionText(v, ownPatterns, stopPatterns)) break;
+          const ownInline = extractTextAfterDescriptionLabel(v, ownPatterns);
+          const t = trimAtKaizenStopText(ownInline || cleanInfoText(v));
+          if (t && !isGenericIgnored(t)) rightParts.push(t);
+        }
+        if (rightParts.length) return uniqueLines(rightParts).join("\n");
+
+        // below cells: label ke niche wala typed text
+        let lines = [];
+        let blankRows = 0;
+        const maxR = Math.min(range.e.r, labelCell.r + 20);
+        const maxC = Math.min(range.e.c, labelCell.c + 14);
+        for (let r = labelCell.r + 1; r <= maxR; r++) {
+          let rowParts = [];
+          for (let c = labelCell.c; c <= maxC; c++) {
+            const v = getCell(sheet, cellAddr(r, c));
+            if (!v) continue;
+            if (isStopSectionText(v, ownPatterns, stopPatterns)) {
+              return uniqueLines(lines).join("\n").trim();
+            }
+            const ownInline = extractTextAfterDescriptionLabel(v, ownPatterns);
+            if (ownInline) {
+              const ti = trimAtKaizenStopText(ownInline);
+              if (ti) rowParts.push(ti);
+              continue;
+            }
+            if (textMatchesAnyPattern(v, ownPatterns)) continue;
+            const t = trimAtKaizenStopText(cleanInfoText(v));
+            if (t && !isGenericIgnored(t)) rowParts.push(t);
+          }
+          if (rowParts.length) {
+            blankRows = 0;
+            lines.push(rowParts.join(" "));
+          } else {
+            blankRows++;
+            if (lines.length && blankRows >= 2) break;
+          }
+        }
+        return uniqueLines(lines).join("\n").trim();
+      }
+
+      function removeLabelAndStop(text, labelRegex, stopRegexList) {
+        let value = cleanInfoText(text);
+        if (!value) return "";
+        value = value.replace(labelRegex, "").trim();
+        // remove starting colon/slash and empty serial marker if needed
+        value = value.replace(/^[\s:：\/-]+/, "").trim();
+        for (const rgx of stopRegexList) {
+          const m = value.search(rgx);
+          if (m >= 0) value = value.substring(0, m).trim();
+        }
+        return cleanInfoText(value);
+      }
+
+      // DIRECT MAPPING AS PER "KAIZEN FORMAT V8.xlsx"
+      // BEFORE description is in merged cell A25:G25
+      // AFTER description is in merged cell H25:N25
+      // BENEFITS is in merged cell A26:N26
+      function extractExactBeforeAfter(sheet) {
+        const beforeRaw = getCell(sheet, "A25");
+        const afterRaw = getCell(sheet, "H25");
+
+        const beforeStop = [
+          /description\s*\(\s*for\s*improvement\s*\)\s*:?.*/i,
+          /description\s*\(\s*after\s*improvement\s*\)\s*:?.*/i,
+          /\bbenefits?\s*:?.*/i,
+          /\bquality\s*\(q\)\b.*/i,
+          /\bsafety\s*\(s\)\b.*/i,
+          /\bkaizen\s+status\s*:?.*/i,
+        ];
+
+        const afterStop = [
+          /\bbenefits?\s*:?.*/i,
+          /\bproductivity\s*\(p\)\b.*/i,
+          /\bquality\s*\(q\)\b.*/i,
+          /\bsafety\s*\(s\)\b.*/i,
+          /\bdelivery\s*\(d\)\b.*/i,
+          /\bcost\s*\('?c'?\)\b.*/i,
+          /\bmoral\s*\(m\)\b.*/i,
+          /\bsystem\s*\/\s*documents\b.*/i,
+          /\breview\s*&\s*approvals\b.*/i,
+          /\bkaizen\s+category\s*:?.*/i,
+          /\bkaizen\s+status\s*:?.*/i,
+          /\bimplemented\b.*/i,
+          /\binprocess\b.*/i,
+          /\bplanned\b.*/i,
+          /\bhorizontal\s+deployment\s*:?.*/i,
+        ];
+
+        let before = removeLabelAndStop(
+          beforeRaw,
+          /(?:description\s*\(\s*before\s*improvement\s*\)|^\s*before)\s*:?/i,
+          beforeStop,
+        );
+        let after = removeLabelAndStop(
+          afterRaw,
+          /(?:description\s*\(\s*(?:for|after)\s*improvement\s*\)|^\s*after)\s*:?/i,
+          afterStop,
+        );
+
+        return { before, after };
+      }
+
+      function extractBenefit(sheet) {
+        const raw = getCell(sheet, "A26");
+        return removeLabelAndStop(raw, /benefits?\s*:?/i, [
+          /\bproductivity\s*\(p\)\b.*/i,
+          /\bquality\s*\(q\)\b.*/i,
+          /\bsafety\s*\(s\)\b.*/i,
+          /\bdelivery\s*\(d\)\b.*/i,
+          /\bcost\s*\('?c'?\)\b.*/i,
+          /\bmoral\s*\(m\)\b.*/i,
+          /\breview\s*&\s*approvals\b.*/i,
+          /\bkaizen\s+category\s*:?.*/i,
+          /\bkaizen\s+status\s*:?.*/i,
+        ]);
+      }
+
+      /* CHANGE NOTE: One image cell (AFTER column) replaced with KAIZEN CATEGORY.
+   Excel me PRODUCTIVITY/QUALITY/SAFETY/DELIVERY/COST/MORAL/5S/SYSTEM-DOCUMENTS ke samne
+   jis cell me ü / tick hai, wahi option name KAIZEN CATEGORY cell me aayega.
+   Multiple tick honge to comma separated aayenge. */
+      const KAIZEN_OPTION_LABELS = [
+        { name: "PRODUCTIVITY", patterns: [/productivity\s*\(?\s*p\s*\)?/i] },
+        { name: "QUALITY", patterns: [/quality\s*\(?\s*q\s*\)?/i] },
+        { name: "SAFETY", patterns: [/safety\s*\(?\s*s\s*\)?/i] },
+        { name: "DELIVERY", patterns: [/delivery\s*\(?\s*d\s*\)?/i] },
+        { name: "COST", patterns: [/cost\s*\(?\s*'?c'?\s*\)?/i] },
+        { name: "MORAL", patterns: [/moral(?:e)?\s*\(?\s*m\s*\)?/i] },
+        { name: "5S", patterns: [/5\s*s/i] },
+        { name: "SYSTEM/DOCUMENTS", patterns: [/system\s*\/?\s*documents?/i] },
+      ];
+      function hasTickValue(v) {
+        const raw = String(v || "").trim();
+        if (!raw) return false;
+        if (/[üÜ✓✔☑√]/.test(raw)) return true;
+        const n = normText(raw);
+        return [
+          "yes",
+          "y",
+          "true",
+          "ok",
+          "checked",
+          "check",
+          "tick",
+          "right",
+          "selected",
+          "1",
+        ].includes(n);
+      }
+      function optionMatchIndex(raw, opt) {
+        raw = String(raw || "");
+        let best = -1;
+        opt.patterns.forEach((re) => {
+          const m = raw.match(re);
+          if (m && (best < 0 || m.index < best)) best = m.index;
+        });
+        return best;
+      }
+      function countOptionLabelsInText(raw) {
+        return KAIZEN_OPTION_LABELS.filter(
+          (opt) => optionMatchIndex(raw, opt) >= 0,
+        ).length;
+      }
+      function selectedOptionsFromDenseText(raw) {
+        raw = String(raw || "");
+        let positions = [];
+        KAIZEN_OPTION_LABELS.forEach((opt) => {
+          const idx = optionMatchIndex(raw, opt);
+          if (idx >= 0) positions.push({ idx, opt });
+        });
+        positions.sort((a, b) => a.idx - b.idx);
+        let out = [];
+        for (let i = 0; i < positions.length; i++) {
+          const start = positions[i].idx;
+          const end =
+            i + 1 < positions.length ? positions[i + 1].idx : raw.length;
+          const segment = raw.substring(start, end);
+          if (hasTickValue(segment)) out.push(positions[i].opt.name);
+        }
+        return out;
+      }
+      function extractSelectedKaizenOptions(sheet) {
+        const exactPositions = [
+          { name: "PRODUCTIVITY", address: "C27" },
+          { name: "QUALITY", address: "F27" },
+          { name: "SAFETY", address: "I27" },
+          { name: "DELIVERY", address: "M27" },
+          { name: "COST", address: "C28" },
+          { name: "MORAL", address: "F28" },
+          { name: "5S", address: "I28" },
+          { name: "SYSTEM/DOCUMENTS", address: "M28" },
+        ];
+        const exactSelected = exactPositions
+          .filter((option) => hasTickValue(getCell(sheet, option.address)))
+          .map((option) => option.name);
+        if (exactSelected.length) return exactSelected.join(", ");
+
+        const cells = nonEmptyCells(sheet);
+        let selected = [];
+        const add = (name) => {
+          if (name && !selected.includes(name)) selected.push(name);
+        };
+
+        // Case 1: labels and tick marks are inside one merged/long cell.
+        cells.forEach((cell) => {
+          selectedOptionsFromDenseText(cell.v).forEach(add);
+        });
+
+        // Case 2: label cell अलग और tick/ü next cell में है.
+        KAIZEN_OPTION_LABELS.forEach((opt) => {
+          cells.forEach((cell) => {
+            if (optionMatchIndex(cell.v, opt) < 0) return;
+            // Dense text me multiple labels ho to above logic enough hai; yaha separate layout handle karna hai.
+            if (countOptionLabelsInText(cell.v) > 1) return;
+
+            if (hasTickValue(cell.v)) {
+              add(opt.name);
+              return;
+            }
+
+            // Same row me next option label ke pahile tak tick dhundo.
+            let nextLabelCol = null;
+            cells.forEach((other) => {
+              if (other.r !== cell.r || other.c <= cell.c) return;
+              if (countOptionLabelsInText(other.v) > 0) {
+                if (nextLabelCol === null || other.c < nextLabelCol)
+                  nextLabelCol = other.c;
+              }
+            });
+            let maxCol = Math.min(
+              cell.c + 4,
+              nextLabelCol === null ? cell.c + 4 : nextLabelCol - 1,
+            );
+            for (let c = cell.c + 1; c <= maxCol; c++) {
+              if (hasTickValue(getCell(sheet, cellAddr(cell.r, c)))) {
+                add(opt.name);
+                return;
+              }
+            }
+            // Kuch formats me tick label ke bilkul niche hota hai.
+            for (let r = cell.r + 1; r <= cell.r + 1; r++) {
+              for (let c = cell.c; c <= maxCol; c++) {
+                if (hasTickValue(getCell(sheet, cellAddr(r, c)))) {
+                  add(opt.name);
+                  return;
+                }
+              }
+            }
+          });
+        });
+        return selected.join(", ");
+      }
+
+      function valueWithoutLabel(sheet, addresses, labelRegex) {
+        for (const address of addresses) {
+          const raw = cleanInfoText(getCell(sheet, address));
+          if (!raw) continue;
+          const stripped = raw
+            .replace(labelRegex, "")
+            .replace(/^[\s:：/-]+/, "")
+            .trim();
+          if (stripped === raw) return raw;
+          if (/[:：]/.test(raw) || !stripped) {
+            if (stripped) return stripped;
+            continue;
+          }
+          return raw;
+        }
+        return "";
+      }
+      function formatDateFromSheet(sheet, address) {
+        const cell = sheet[address];
+        if (!cell || cell.v == null) return "";
+        if (cell.v instanceof Date && !isNaN(cell.v))
+          return cell.v.toLocaleDateString("en-IN");
+        if (cell.w) return String(cell.w).trim();
+        if (typeof cell.v === "number" && XLSX.SSF)
+          return XLSX.SSF.format("d/m/yyyy", cell.v);
+        return String(cell.v).trim();
+      }
+      function kaizenNumberFromFile(fileName) {
+        const match = String(fileName || "").match(/^\s*(\d+)\s*[-_]/);
+        return match ? match[1] : "";
+      }
+      function nextKaizenNumber(fileName) {
+        const highestSaved = convertedData.reduce(
+          (max, record) => Math.max(max, Number(record.oldKaizenNo) || 0),
+          0,
+        );
+        if (highestSaved > 0) return String(highestSaved + 1);
+        return kaizenNumberFromFile(fileName) || "1";
+      }
+      function selectedStatus(sheet) {
+        const choices = [
+          { name: "Implemented", cells: ["D34", "E34"] },
+          { name: "In Process", cells: ["H34", "I34"] },
+          { name: "Planned", cells: ["L34"] },
+        ];
+        for (const choice of choices) {
+          if (
+            choice.cells.some((address) =>
+              hasTickValue(getCell(sheet, address)),
+            )
+          )
+            return choice.name;
+        }
+        return "";
+      }
+      function isV8Format(sheet) {
+        const beforeText = normText(getCell(sheet, "A25"));
+        const afterText = normText(getCell(sheet, "H25"));
+        return (
+          normText(getCell(sheet, "B1")).includes("kaizen sheet") &&
+          normText(getCell(sheet, "A5")).includes("kaizen theme") &&
+          beforeText.includes("before") &&
+          afterText.includes("after")
+        );
+      }
+      function createRecordFromSheet(sheet, fileName) {
+        if (!isV8Format(sheet))
+          throw new Error(
+            "Old/unsupported Kaizen format. Only V8 is accepted.",
+          );
+        const ba = extractExactBeforeAfter(sheet);
+        const selectedBenefit = extractSelectedKaizenOptions(sheet);
+        const record = {
+          date: formatDateFromSheet(sheet, "M5"),
+          plant: valueWithoutLabel(sheet, ["M6", "N6"], /^plant\s*:?/i),
+          department: valueWithoutLabel(
+            sheet,
+            ["M7", "N7"],
+            /^department\s*:?/i,
+          ),
+          employeeId: valueWithoutLabel(
+            sheet,
+            ["M8", "N8"],
+            /^emp\.?\s*id\.?\s*no\.?\s*:?/i,
+          ),
+          name: valueWithoutLabel(
+            sheet,
+            ["A40", "B40", "A42", "B42"],
+            /^kaizen\s+idea\s+by\s*:?/i,
+          ),
+          theme: valueWithoutLabel(
+            sheet,
+            ["C5", "D5"],
+            /^kaizen\s+theme\s*:?/i,
+          ),
+          description: valueWithoutLabel(
+            sheet,
+            ["C6", "D6"],
+            /^kaizen\s+description\s*\(\s*idea\s*\)\s*:?/i,
+          ),
+          area: valueWithoutLabel(sheet, ["C7", "D7"], /^kaizen\s+area\s*:?/i),
+          team: valueWithoutLabel(sheet, ["C8", "D8"], /^kaizen\s+team\s*:?/i),
+          before: ba.before || "",
+          after: ba.after || "",
+          benefit: extractBenefit(sheet) || "",
+          category: selectedBenefit || "",
+          status: selectedStatus(sheet),
+        };
+        const implemented = record.status === "Implemented";
+        return Object.assign(record, {
+          oldTeam: record.name || record.team,
+          oldKaizenNo: nextKaizenNumber(fileName),
+          oldIdeaBy: record.name,
+          oldArea: record.area,
+          oldTheme: record.theme,
+          oldDescription: record.description,
+          oldFeasibility: "IMAGE",
+          oldFacilitator: "IMAGE",
+          oldBenefit: record.benefit,
+          oldBefore: record.before,
+          oldAfter: record.after,
+          oldCategory: record.category,
+          oldDeployment: valueWithoutLabel(
+            sheet,
+            ["D37", "D38", "L37", "L38"],
+            /^horizontal\s+deployment\s*:?/i,
+          ),
+          oldTarget: implemented ? "" : record.date,
+          oldImpl: implemented ? record.date : "",
+          oldStatus: record.status,
+          oldPhysical: "Yes",
+          oldSoft: "Yes",
+          oldHelp: "Required",
+        });
+      }
+
+      /* CHANGE NOTE: Multiple Kaizen file conversion added. Each selected file becomes one row/record. */
+      function readWorkbookFile(file) {
+        return new Promise((resolve, reject) => {
+          let reader = new FileReader();
+          reader.onload = function (e) {
+            try {
+              let data = new Uint8Array(e.target.result);
+              let workbook = XLSX.read(data, {
+                type: "array",
+                cellDates: true,
+              });
+              let sheet = workbook.Sheets[workbook.SheetNames[0]];
+              resolve({ file: file, sheet: sheet });
+            } catch (err) {
+              reject(err);
+            }
+          };
+          reader.onerror = () =>
+            reject(reader.error || new Error("File read error"));
+          reader.readAsArrayBuffer(file);
+        });
+      }
+      async function convertFile() {
+        if (typeof XLSX === "undefined") {
+          alert(
+            "Excel engine load nahi hua. Internet ON karke file refresh karo, ya mujhe offline version banane ko bolo.",
+          );
+          return;
+        }
+        let files = Array.from(
+          document.getElementById("excelFile").files || [],
+        );
+        if (files.length === 0) {
+          alert("Select Excel File");
+          return;
+        }
+
+        let added = 0,
+          failed = 0,
+          failureMessages = [];
+        document.getElementById("status").innerHTML =
+          "Converting " + files.length + " file(s)...";
+
+        for (let i = 0; i < files.length; i++) {
+          try {
+            let result = await readWorkbookFile(files[i]);
+            let record = createRecordFromSheet(result.sheet, result.file.name);
+            record.sourceFile = result.file.name;
+            convertedData.push(record);
+            added++;
+            document.getElementById("status").innerHTML =
+              "Converted " + added + " / " + files.length + " file(s)...";
+          } catch (err) {
+            console.error("Convert failed:", files[i]?.name, err);
+            failed++;
+            failureMessages.push(
+              (files[i]?.name || "File") + ": " + (err.message || "Failed"),
+            );
+          }
+        }
+        if (added > 0) {
+          renderTable();
+          persistLocal();
+          updateDashboardStats();
+        }
+        if (added === 0) {
+          document.getElementById("status").innerHTML =
+            "No new record added. " +
+            (failureMessages[0] || "Unsupported Kaizen format.");
+          return;
+        }
+        document.getElementById("status").innerHTML =
+          added +
+          " Records Converted Successfully" +
+          (failed
+            ? " | " + failed + " file failed: " + failureMessages.join(" | ")
+            : "") +
+          ". Save button dabakar data save karo.";
+      }
+
+      function normalizeCategoryName(v) {
+        return String(v || "")
+          .toUpperCase()
+          .replace(/MORALE/g, "MORAL")
+          .replace(/SYSTEM\s*\/?\s*DOCUMENTS?/g, "SYSTEM DOCUMENTS")
+          .replace(/[^A-Z0-9]+/g, " ")
+          .trim();
+      }
+      function recordHasSearchCategory(record, category) {
+        if (!category || category === "ALL") return true;
+        const wanted = normalizeCategoryName(category);
+        const recordCat = String(record.category || record.benefit || "");
+        return recordCat.split(",").some((part) => {
+          const p = normalizeCategoryName(part);
+          return p === wanted || p.includes(wanted) || wanted.includes(p);
+        });
+      }
+      function setActiveCategoryButton(category) {
+        document.querySelectorAll(".cat-option").forEach((btn) => {
+          const val = btn.dataset.category || "";
+          btn.classList.toggle(
+            "active",
+            (category || "ALL") === val || (!category && val === "ALL"),
+          );
+        });
+      }
+      function applySearchAndHighlight() {
+        const box = document.getElementById("searchBox");
+        const textValue = (box ? box.value : "").toLowerCase().trim();
+        let visibleCount = 0;
+        document.querySelectorAll("#tableBody tr").forEach((row, index) => {
+          const record = convertedData[index] || {};
+          const categoryOk = recordHasSearchCategory(
+            record,
+            activeSearchCategory,
+          );
+          const textOk =
+            !textValue || row.innerText.toLowerCase().includes(textValue);
+          const showRow = categoryOk && textOk;
+          row.style.display = showRow ? "" : "none";
+          row.classList.toggle(
+            "highlight-row",
+            showRow && (!!activeSearchCategory || !!textValue),
+          );
+          if (showRow) visibleCount++;
+        });
+        const status = document.getElementById("status");
+        if (status) {
+          if (activeSearchCategory) {
+            status.innerHTML =
+              visibleCount +
+              " record(s) highlighted for " +
+              activeSearchCategory;
+          } else if (textValue) {
+            status.innerHTML = visibleCount + " record(s) found for search";
+          } else {
+            status.innerHTML = convertedData.length + " Records Available";
+          }
+        }
+      }
+      function setupCategorySearch() {
+        const searchCard = document.getElementById("searchCard");
+        const searchBox = document.getElementById("searchBox");
+        const categoryOptions = document.getElementById("categoryOptions");
+        if (!searchCard || !searchBox || !categoryOptions) return;
+
+        searchBox.addEventListener("click", () => {
+          searchCard.classList.add("open");
+        });
+        searchBox.addEventListener("focus", () => {
+          searchCard.classList.add("open");
+        });
+        searchBox.addEventListener("input", () => {
+          activeSearchCategory = "";
+          setActiveCategoryButton("ALL");
+          applySearchAndHighlight();
+        });
+        categoryOptions.addEventListener("click", (e) => {
+          const btn = e.target.closest(".cat-option");
+          if (!btn) return;
+          const category = btn.dataset.category || "ALL";
+          if (category === "ALL") {
+            activeSearchCategory = "";
+            searchBox.value = "";
+          } else {
+            activeSearchCategory = category;
+            searchBox.value = category;
+          }
+          setActiveCategoryButton(category);
+          applySearchAndHighlight();
+        });
+        document.addEventListener("click", (e) => {
+          if (!searchCard.contains(e.target))
+            searchCard.classList.remove("open");
+        });
+      }
+
+      function renderTable() {
+        let tbody = document.getElementById("tableBody");
+        tbody.innerHTML = "";
+        convertedData.forEach((record, rowIndex) => {
+          let tr = document.createElement("tr");
+          columns.forEach((key) => {
+            let td = document.createElement("td");
+            td.dataset.row = rowIndex;
+            td.dataset.key = key;
+            td.textContent = record[key] || "";
+            td.contentEditable = "true";
+            td.addEventListener("input", () => {
+              convertedData[Number(td.dataset.row)][td.dataset.key] =
+                td.innerText.trim();
+              persistLocal();
+              updateDashboardStats();
+            });
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+        document.getElementById("status").innerHTML =
+          convertedData.length + " Records Available";
+        updateDashboardStats();
+        applySearchAndHighlight();
+      }
+      document
+        .getElementById("convertBtn")
+        .addEventListener("click", convertFile);
+      document.getElementById("saveBtn").addEventListener("click", () => {
+        renderTable();
+        persistLocal();
+        document.getElementById("status").innerHTML =
+          "Edited Data Saved Successfully";
+      });
+      document.getElementById("showBtn").addEventListener("click", () => {
+        convertedData = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        renderTable();
+        document.getElementById("status").innerHTML =
+          convertedData.length + " Saved Records Loaded";
+      });
+      document.getElementById("downloadBtn").addEventListener("click", () => {
+        if (typeof XLSX === "undefined") {
+          alert(
+            "Excel engine load nahi hua. Internet ON karke file refresh karo.",
+          );
+          return;
+        }
+        if (convertedData.length === 0) {
+          alert("No Data");
+          return;
+        }
+        const exportHeaders = [
+          "DATE",
+          "PLANT",
+          "DEPARTMENT",
+          "EMPLOYEE ID",
+          "NAME",
+          "KAIZEN THEME",
+          "KAIZEN DESCRIPTION",
+          "KAIZEN AREA",
+          "KAIZEN TEAM",
+          "BEFORE IMPROVEMENT",
+          "AFTER IMPROVEMENT",
+          "BENEFITS",
+          "CATEGORY",
+          "STATUS",
+          "TEAM NAMES",
+          "KAIZEN NO",
+          "KAIZEN IDEA BY",
+          "KAIZEN AREA",
+          "KAIZEN THEME",
+          "KAIZEN DESCRIPTION",
+          "FEASIBILITY",
+          "FACILITATOR",
+          "AREA OF BENEFIT",
+          "BEFORE",
+          "AFTER",
+          "KAIZEN CATEGORY",
+          "HORIZONTAL DEPLOYMENT",
+          "TARGET DATE",
+          "IMPL.DATE",
+          "KAIZEN STATUS",
+          "AVAILABLE PHYSICALLY",
+          "SOFT COPY",
+          "KAIZEN DEPLOYMENT HELP",
+        ];
+        const exportRows = convertedData.map((r) => [
+          r.date,
+          r.plant,
+          r.department,
+          r.employeeId,
+          r.name,
+          r.theme,
+          r.description,
+          r.area,
+          r.team,
+          r.before,
+          r.after,
+          r.benefit,
+          r.category,
+          r.status,
+          r.oldTeam,
+          r.oldKaizenNo,
+          r.oldIdeaBy,
+          r.oldArea,
+          r.oldTheme,
+          r.oldDescription,
+          r.oldFeasibility,
+          r.oldFacilitator,
+          r.oldBenefit,
+          r.oldBefore,
+          r.oldAfter,
+          r.oldCategory,
+          r.oldDeployment,
+          r.oldTarget,
+          r.oldImpl,
+          r.oldStatus,
+          r.oldPhysical,
+          r.oldSoft,
+          r.oldHelp,
+        ]);
+        let ws = XLSX.utils.aoa_to_sheet([exportHeaders, ...exportRows]);
+        let wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Microsoft Format");
+        XLSX.writeFile(wb, "Kaizen_Microsoft_Format.xlsx");
+      });
+      /* Category search handled by setupCategorySearch() */
+      document.getElementById("clearBtn").addEventListener("click", () => {
+        document.getElementById("tableBody").innerHTML = "";
+        document.getElementById("status").innerHTML =
+          "Table Cleared (Saved Data Safe)";
+      });
+      document
+        .getElementById("deleteSavedBtn")
+        .addEventListener("click", () => {
+          if (confirm("Saved data delete karna hai?")) {
+            convertedData = [];
+            localStorage.removeItem(STORAGE_KEY);
+            renderTable();
+            document.getElementById("status").innerHTML = "Saved Data Deleted";
+          }
+        });
+      document.addEventListener("click", (event) => {
+        const button = event.target.closest("button");
+        if (!button) return;
+        button.classList.add("clicked");
+        setTimeout(() => button.classList.remove("clicked"), 220);
+      });
+      function updateDashboardStats() {
+        const total = convertedData.length;
+        const implemented = convertedData.filter((r) =>
+          String(r.status || "")
+            .toLowerCase()
+            .includes("implemented"),
+        ).length;
+        const pending = convertedData.filter(
+          (r) =>
+            String(r.status || "")
+              .toLowerCase()
+              .includes("process") ||
+            String(r.status || "")
+              .toLowerCase()
+              .includes("pending"),
+        ).length;
+        const saved = JSON.parse(
+          localStorage.getItem(STORAGE_KEY) || "[]",
+        ).length;
+        const set = (id, val) => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = val;
+        };
+        set("statTotal", total);
+        set("statImplemented", implemented);
+        set("statPending", pending);
+        set("statSaved", saved);
+      }
+      function showLoginAfterBoot() {
+        const boot = document.getElementById("bootScreen");
+        const login = document.getElementById("loginPage");
+        const app = document.getElementById("app");
+        app.style.display = "none";
+        login.style.display = "none";
+        setTimeout(() => {
+          if (boot) boot.classList.add("hideBoot");
+          if (login) login.style.display = "flex";
+        }, 2600);
+      }
+      window.onload = function () {
+        convertedData = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        setupCategorySearch();
+        updateDashboardStats();
+        showLoginAfterBoot();
+      };
+      window.addEventListener("beforeunload", persistLocal);
+    </script>
+  </body>
+</html>
