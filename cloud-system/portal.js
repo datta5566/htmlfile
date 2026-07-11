@@ -15,7 +15,10 @@
     kaizen: {
       name: "Kaizen Converter",
       url: "../kaizen/",
-      keys: ["dk_kaizen_online_records_v4"]
+      keys: [
+        "kaizen_converter_records_v8_combined_v2",
+        "dk_kaizen_online_records_v4"
+      ]
     },
     rejection: {
       name: "Rejection Management",
