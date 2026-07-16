@@ -46,7 +46,9 @@
   <div class="monthly-table-wrap"><table class="monthly-table"><thead id="monthlyTableHead"></thead><tbody id="monthlyTableBody"></tbody></table></div>
   <div class="monthly-charts-title"><h2>2. Defect-wise Charts</h2><p class="mut">Monthly data ke niche Power BI style analysis.</p></div>
   <div class="monthly-chart-grid">
-    <article class="monthly-chart-card monthly-wide"><h3>Monthly Defect Pareto</h3><p>Defect quantity aur cumulative percentage.</p><div class="monthly-chart-wrap"><canvas id="monthlyParetoChart"></canvas></div></article>
+    <article class="monthly-chart-card"><h3>Rejection Pareto</h3><p>Sirf REJECTION sheet ke defect reasons.</p><div class="monthly-chart-wrap"><canvas id="monthlyRejectionPareto"></canvas></div></article>
+    <article class="monthly-chart-card"><h3>Rework Pareto</h3><p>Sirf REWORK sheet ke defect reasons.</p><div class="monthly-chart-wrap"><canvas id="monthlyReworkPareto"></canvas></div></article>
+    <article class="monthly-chart-card monthly-wide"><h3>Groove Pareto</h3><p>Sirf GROOVE sheet ke defect reasons.</p><div class="monthly-chart-wrap"><canvas id="monthlyGroovePareto"></canvas></div></article>
     <article class="monthly-chart-card"><h3>Defect Share</h3><p>Total rejection me har defect ka share.</p><div class="monthly-chart-wrap"><canvas id="monthlyDefectChart"></canvas></div></article>
     <article class="monthly-chart-card"><h3>Daily Rejection Trend</h3><p>Selected month ka date-wise trend.</p><div class="monthly-chart-wrap"><canvas id="monthlyDailyChart"></canvas></div></article>
     <article class="monthly-chart-card monthly-wide"><h3>Unit + Defect Stacked Chart</h3><p>Unit ke andar defect-wise rejection.</p><div class="monthly-chart-wrap"><canvas id="monthlyStackedChart"></canvas></div></article>
@@ -178,12 +180,21 @@ function renderMonthlyDashboard(refill){
  document.getElementById('monthlyTableBody').innerHTML=rows.length?rows.map(function(r,i){return'<tr><td>'+(i+1)+'</td>'+monthlyColumns.map(function(x){return'<td>'+esc(r[x.key]||'')+'</td>'}).join('')+'</tr>'}).join(''):'<tr><td class="monthly-empty" colspan="'+(monthlyColumns.length+1)+'">Selected month me data nahi mila.</td></tr>';
  drawMonthlyCharts(rows)
 }
+function drawMonthlyCategoryPareto(rows,type,key,id,color){
+ const subset=rows.filter(function(r){return recordType(r)===type}),map=qAggregate(subset,function(r){return qText(r.rejection,'Unspecified Defect')},qQty),items=Object.entries(map).sort(function(a,b){return b[1]-a[1]}).slice(0,15);
+ if(!items.length){mDestroy(key);return}
+ const total=items.reduce(function(s,x){return s+x[1]},0)||1;let running=0;const cumulative=items.map(function(x){running+=x[1];return Number((running*100/total).toFixed(1))}),options=qOptions(false);
+ options.scales.y1={position:'right',min:0,max:100,ticks:{color:'#f59e0b',callback:function(v){return v+'%'}},grid:{drawOnChartArea:false}};
+ mCreate(key,id,{type:'bar',data:{labels:items.map(function(x){return x[0]}),datasets:[{label:type+' Qty',data:items.map(function(x){return x[1]}),backgroundColor:color,borderRadius:7},{type:'line',label:'Cumulative %',data:cumulative,borderColor:'#f59e0b',yAxisID:'y1',tension:.25,pointRadius:3}]},options:options})
+}
 function drawMonthlyCharts(rows){
  if(typeof Chart==='undefined')return;
  if(!rows.length){Object.keys(monthlyChartInstances).forEach(mDestroy);return}
  const defectMap=qAggregate(rows,function(r){return qText(r.rejection,'Unspecified Defect')},qQty),defs=Object.entries(defectMap).sort(function(a,b){return b[1]-a[1]}).slice(0,12),total=defs.reduce(function(s,x){return s+x[1]},0)||1;let running=0;
  const cumulative=defs.map(function(x){running+=x[1];return Number((running*100/total).toFixed(1))}),po=qOptions(false);po.scales.y1={position:'right',min:0,max:100,ticks:{color:'#f59e0b',callback:function(v){return v+'%'}},grid:{drawOnChartArea:false}};
- mCreate('pareto','monthlyParetoChart',{type:'bar',data:{labels:defs.map(function(x){return x[0]}),datasets:[{label:'Reject Qty',data:defs.map(function(x){return x[1]}),backgroundColor:'#22d3ee',borderRadius:7},{type:'line',label:'Cumulative %',data:cumulative,borderColor:'#f59e0b',yAxisID:'y1',tension:.25,pointRadius:3}]},options:po});
+ drawMonthlyCategoryPareto(rows,'REJECTION','paretoRejection','monthlyRejectionPareto','#ef4444');
+ drawMonthlyCategoryPareto(rows,'REWORK','paretoRework','monthlyReworkPareto','#f59e0b');
+ drawMonthlyCategoryPareto(rows,'GROOVE','paretoGroove','monthlyGroovePareto','#8b5cf6');
  mCreate('defect','monthlyDefectChart',{type:'doughnut',data:{labels:defs.map(function(x){return x[0]}),datasets:[{label:'Reject Qty',data:defs.map(function(x){return x[1]}),backgroundColor:qPalette(defs.length),borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#aeb9cc',boxWidth:12}}}}});
  const daily=Object.entries(qAggregate(rows,function(r){return qDate(r.date)},qQty)).sort(function(a,b){return a[0].localeCompare(b[0])});
  mCreate('daily','monthlyDailyChart',{type:'line',data:{labels:daily.map(function(x){return x[0]}),datasets:[{label:'Reject Qty',data:daily.map(function(x){return x[1]}),borderColor:'#22d3ee',backgroundColor:'rgba(34,211,238,.2)',fill:true,tension:.3,pointRadius:3}]},options:qOptions(false)});
@@ -200,6 +211,7 @@ function downloadMonthlyExcel(){
  const unitMap=qAggregate(rows,function(r){return qText(r.unit,'Unknown Unit')},qQty),unitSummary=Object.entries(unitMap).sort(function(a,b){return b[1]-a[1]}).map(function(x,i){return{'SR NO':i+1,'Unit':x[0],'Reject Qty':x[1]}});
  const wb=XLSX.utils.book_new();
  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(data),'Monthly Data');
+ ['REJECTION','REWORK','GROOVE'].forEach(function(type){const categoryData=data.filter(function(row){return row.Type===type});if(categoryData.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(categoryData),type)});
  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(defectSummary),'Defect Summary');
  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(unitSummary),'Unit Summary');
  XLSX.writeFile(wb,'Rejection_Monthly_'+month+'.xlsx');toast(monthlyLabel(month)+' Excel downloaded')
