@@ -1,15 +1,34 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>DK Cloud Admin Dashboard</title>
+  <title>DK Private Admin Dashboard</title>
   <link rel="stylesheet" href="admin.css">
 </head>
 <body>
-  <header class="top"><div><h1>DK Cloud Admin Dashboard</h1><p>View all users data and receive live submission alerts</p></div><div><span id="adminUser"></span> <button class="btn danger" id="logoutBtn" type="button">Logout</button></div></header>
-  <section class="login" id="loginPanel"><h2>Administrator Email OTP Login</h2><form id="adminOtpRequestForm"><label class="field">Admin Email<input id="adminEmail" type="email" required autocomplete="email"></label><button class="btn" type="submit">Send OTP</button></form><form id="adminOtpVerifyForm" hidden><p>OTP sent to <strong id="adminOtpEmailLabel"></strong></p><label class="field">6-digit OTP<input id="adminOtpCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required></label><div class="buttons"><button class="btn" type="submit">Verify OTP & Open Dashboard</button><button class="btn secondary" id="adminChangeEmailBtn" type="button">Change Email</button></div></form><p class="message" id="loginMessage"></p></section>
-  <main class="dashboard" id="dashboard" hidden><section class="stats"><div class="stat"><span>Users</span><strong id="userCount">0</strong></div><div class="stat"><span>Applications</span><strong id="appCount">0</strong></div><div class="stat"><span>Cloud Sections</span><strong id="snapshotCount">0</strong></div><div class="stat"><span>Total Records</span><strong id="recordCount">0</strong></div><div class="stat alert-stat"><span>Unread Alerts</span><strong id="unreadCount">0</strong></div></section><section class="notifications"><div class="notification-head"><h2>Live Notifications <span class="notification-badge" id="notificationBadge">0</span></h2><div class="buttons"><button class="btn secondary" id="enableBrowserAlertsBtn" type="button">Enable Browser Alerts</button><button class="btn" id="markAllReadBtn" type="button">Mark All Read</button></div></div><div class="notification-list" id="notificationList"><p class="empty">Login to load notifications.</p></div></section><section class="tools"><input id="searchBox" type="search" placeholder="Search user, barcode, part, unit..."><select id="appFilter"><option value="">All Apps</option></select><select id="userFilter"><option value="">All Users</option></select><button class="btn" id="refreshBtn" type="button">Refresh</button><button class="btn secondary" id="exportCsvBtn" type="button">Export CSV</button><button class="btn secondary" id="exportJsonBtn" type="button">Backup JSON</button><span class="status" id="visibleCount"></span><span class="status" id="dashboardStatus"></span></section><section class="tablebox"><table><thead><tr><th>Sr</th><th>User</th><th>App</th><th>Device</th><th>Data Section</th><th>Updated</th><th>Record</th><th>Full Data</th><th>File</th></tr></thead><tbody id="recordsBody"><tr><td class="empty" colspan="9">Login to load cloud records.</td></tr></tbody></table></section></main>
+  <header class="top"><div><h1>DK Private Admin Dashboard</h1><p>सभी users द्वारा submit किया गया data</p></div><div><span id="adminUser"></span> <button class="btn danger" id="logoutBtn" type="button">Logout</button></div></header>
+  <section class="login" id="loginPanel">
+    <h2>Administrator Login</h2>
+    <p>Email और password से login करें। OTP नहीं लगेगा।</p>
+    <form id="adminPasswordForm">
+      <label class="field">Admin Email<input id="adminEmail" type="email" required autocomplete="email"></label>
+      <label class="field">Password<input id="adminPassword" type="password" required minlength="6" autocomplete="current-password"></label>
+      <div class="buttons"><button class="btn" type="submit">Open Dashboard</button><button class="btn secondary" id="resetPasswordBtn" type="button">Create / Reset Password</button></div>
+    </form>
+    <form id="newPasswordForm" hidden>
+      <p>नया password बनाएं।</p>
+      <label class="field">New Password<input id="newAdminPassword" type="password" required minlength="6" autocomplete="new-password"></label>
+      <button class="btn" type="submit">Save New Password</button>
+    </form>
+    <p class="message" id="loginMessage"></p>
+  </section>
+  <main class="dashboard" id="dashboard" hidden>
+    <section class="stats"><div class="stat"><span>Users / Devices</span><strong id="userCount">0</strong></div><div class="stat"><span>Applications</span><strong id="appCount">0</strong></div><div class="stat"><span>Total Records</span><strong id="recordCount">0</strong></div><div class="stat alert-stat"><span>New Records</span><strong id="unreadCount">0</strong></div></section>
+    <section class="notifications"><div class="notification-head"><h2>Latest Submissions <span class="notification-badge" id="notificationBadge">0</span></h2><div class="buttons"><button class="btn secondary" id="enableBrowserAlertsBtn" type="button">Enable Browser Alerts</button><button class="btn" id="markAllReadBtn" type="button">Mark All Read</button></div></div><div class="notification-list" id="notificationList"><p class="empty">Login to load records.</p></div></section>
+    <section class="tools"><input id="searchBox" type="search" placeholder="Search user, barcode, part, unit..."><select id="appFilter"><option value="">All Apps</option></select><select id="userFilter"><option value="">All Users</option></select><button class="btn" id="refreshBtn" type="button">Refresh</button><button class="btn secondary" id="exportCsvBtn" type="button">Export CSV</button><button class="btn secondary" id="exportJsonBtn" type="button">Backup JSON</button><span class="status" id="visibleCount"></span><span class="status" id="dashboardStatus"></span></section>
+    <section class="tablebox"><table><thead><tr><th>Sr</th><th>User</th><th>App</th><th>Device</th><th>Submitted</th><th>Record</th><th>Full Data</th><th>File</th></tr></thead><tbody id="recordsBody"><tr><td class="empty" colspan="8">Login to load records.</td></tr></tbody></table></section>
+  </main>
   <section class="modal" id="jsonModal" hidden><div class="modal-card"><button class="btn danger" id="closeModalBtn" type="button">Close</button><h2>Complete Record Data</h2><pre id="jsonContent"></pre></div></section>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="supabase-config.js"></script><script src="admin-v2.js"></script>
 </body>
