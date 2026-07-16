@@ -14,7 +14,17 @@
     <form id="adminPasswordForm">
       <label class="field">Admin ID<input id="adminId" value="admin" readonly required autocomplete="username"></label>
       <label class="field">Password<input id="adminPassword" type="password" required minlength="6" autocomplete="current-password"></label>
-      <div class="buttons"><button class="btn" type="submit">Open Dashboard</button></div>
+      <div class="buttons"><button class="btn" type="submit">Open Dashboard</button><button class="btn secondary" id="showSetupBtn" type="button">Setup Admin Password</button></div>
+    </form>
+    <form id="adminSetupForm" hidden>
+      <p>पहली बार अपनी Admin Gmail डालें। Password बनाने का link आएगा—OTP नहीं।</p>
+      <label class="field">Admin Gmail<input id="setupAdminEmail" type="email" required autocomplete="email"></label>
+      <div class="buttons"><button class="btn" type="submit">Send Password Link</button><button class="btn secondary" id="cancelSetupBtn" type="button">Cancel</button></div>
+    </form>
+    <form id="newPasswordForm" hidden>
+      <p>अब अपना नया Admin password बनाएं।</p>
+      <label class="field">New Password<input id="newAdminPassword" type="password" required minlength="6" autocomplete="new-password"></label>
+      <button class="btn" type="submit">Save Password</button>
     </form>
     <p class="message" id="loginMessage"></p>
   </section>
