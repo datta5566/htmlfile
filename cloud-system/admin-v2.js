@@ -2,6 +2,8 @@
   "use strict";
   const config = window.DK_CLOUD_CONFIG || {};
   const $ = (selector) => document.querySelector(selector);
+  const ADMIN_ID = "admin";
+  const ADMIN_EMAIL = "admin@dk-app.local";
   let cloudDb = null;
   let currentUser = null;
   let submissions = [];
@@ -117,34 +119,20 @@
     cloudDb = window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
     const { data } = await cloudDb.auth.getSession();
     if (data.session) await verifyAdmin(data.session);
-    cloudDb.auth.onAuthStateChange((event, session) => {
-      if (event === "PASSWORD_RECOVERY") { $("#adminPasswordForm").hidden = true; $("#newPasswordForm").hidden = false; $("#loginMessage").textContent = "नया password बनाएं।"; return; }
+    cloudDb.auth.onAuthStateChange((_event, session) => {
       if (session && !currentUser) verifyAdmin(session).catch((error) => $("#loginMessage").textContent = error.message);
       if (!session) currentUser = null;
     });
   }
   $("#adminPasswordForm").addEventListener("submit", async (event) => {
     event.preventDefault();
-    const email = $("#adminEmail").value.trim().toLowerCase();
+    const adminId = $("#adminId").value.trim().toLowerCase();
     const password = $("#adminPassword").value;
+    if (adminId !== ADMIN_ID) { $("#loginMessage").textContent = "Admin ID गलत है।"; return; }
     $("#loginMessage").textContent = "Login हो रहा है...";
-    const { data, error } = await cloudDb.auth.signInWithPassword({ email, password });
-    if (error) { $("#loginMessage").textContent = "Email या password गलत है।"; return; }
+    const { data, error } = await cloudDb.auth.signInWithPassword({ email: ADMIN_EMAIL, password });
+    if (error) { $("#loginMessage").textContent = "Password गलत है या Admin account setup बाकी है।"; return; }
     if (data.session) await verifyAdmin(data.session);
-  });
-  $("#resetPasswordBtn").onclick = async () => {
-    const email = $("#adminEmail").value.trim().toLowerCase();
-    if (!email) { $("#loginMessage").textContent = "पहले Admin Email लिखें।"; return; }
-    const { error } = await cloudDb.auth.resetPasswordForEmail(email, { redirectTo: location.href.split("#")[0] });
-    $("#loginMessage").textContent = error ? error.message : "Password बनाने का link email पर भेजा गया है।";
-  };
-  $("#newPasswordForm").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const password = $("#newAdminPassword").value;
-    const { error } = await cloudDb.auth.updateUser({ password });
-    if (error) { $("#loginMessage").textContent = error.message; return; }
-    $("#loginMessage").textContent = "Password save हो गया।";
-    location.reload();
   });
   $("#refreshBtn").onclick = () => fetchAll().catch((error) => $("#dashboardStatus").textContent = error.message);
   $("#markAllReadBtn").onclick = () => { localStorage.setItem(READ_KEY, new Date().toISOString()); renderStats(); };
