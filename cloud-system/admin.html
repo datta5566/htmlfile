@@ -12,14 +12,9 @@
     <h2>Administrator Login</h2>
     <p>Email और password से login करें। OTP नहीं लगेगा।</p>
     <form id="adminPasswordForm">
-      <label class="field">Admin Email<input id="adminEmail" type="email" required autocomplete="email"></label>
+      <label class="field">Admin ID<input id="adminId" value="admin" readonly required autocomplete="username"></label>
       <label class="field">Password<input id="adminPassword" type="password" required minlength="6" autocomplete="current-password"></label>
-      <div class="buttons"><button class="btn" type="submit">Open Dashboard</button><button class="btn secondary" id="resetPasswordBtn" type="button">Create / Reset Password</button></div>
-    </form>
-    <form id="newPasswordForm" hidden>
-      <p>नया password बनाएं।</p>
-      <label class="field">New Password<input id="newAdminPassword" type="password" required minlength="6" autocomplete="new-password"></label>
-      <button class="btn" type="submit">Save New Password</button>
+      <div class="buttons"><button class="btn" type="submit">Open Dashboard</button></div>
     </form>
     <p class="message" id="loginMessage"></p>
   </section>
