@@ -3,7 +3,7 @@
   const config = window.DK_CLOUD_CONFIG || {};
   const $ = (selector) => document.querySelector(selector);
   const ADMIN_ID = "admin";
-  const ADMIN_EMAIL = "admin@dk-app.local";
+  const ADMIN_EMAIL_KEY = "DK_PRIVATE_ADMIN_EMAIL";
   let cloudDb = null;
   let currentUser = null;
   let submissions = [];
@@ -119,7 +119,15 @@
     cloudDb = window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
     const { data } = await cloudDb.auth.getSession();
     if (data.session) await verifyAdmin(data.session);
-    cloudDb.auth.onAuthStateChange((_event, session) => {
+    cloudDb.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY") {
+        if (session?.user?.email) localStorage.setItem(ADMIN_EMAIL_KEY, session.user.email.toLowerCase());
+        $("#adminPasswordForm").hidden = true;
+        $("#adminSetupForm").hidden = true;
+        $("#newPasswordForm").hidden = false;
+        $("#loginMessage").textContent = "नया password बनाएं।";
+        return;
+      }
       if (session && !currentUser) verifyAdmin(session).catch((error) => $("#loginMessage").textContent = error.message);
       if (!session) currentUser = null;
     });
@@ -129,10 +137,41 @@
     const adminId = $("#adminId").value.trim().toLowerCase();
     const password = $("#adminPassword").value;
     if (adminId !== ADMIN_ID) { $("#loginMessage").textContent = "Admin ID गलत है।"; return; }
+    const adminEmail = localStorage.getItem(ADMIN_EMAIL_KEY);
+    if (!adminEmail) { $("#loginMessage").textContent = "पहली बार Setup Admin Password दबाएं।"; return; }
     $("#loginMessage").textContent = "Login हो रहा है...";
-    const { data, error } = await cloudDb.auth.signInWithPassword({ email: ADMIN_EMAIL, password });
+    const { data, error } = await cloudDb.auth.signInWithPassword({ email: adminEmail, password });
     if (error) { $("#loginMessage").textContent = "Password गलत है या Admin account setup बाकी है।"; return; }
     if (data.session) await verifyAdmin(data.session);
+  });
+  $("#showSetupBtn").onclick = () => {
+    $("#adminPasswordForm").hidden = true;
+    $("#adminSetupForm").hidden = false;
+    $("#setupAdminEmail").value = localStorage.getItem(ADMIN_EMAIL_KEY) || "";
+    $("#setupAdminEmail").focus();
+  };
+  $("#cancelSetupBtn").onclick = () => {
+    $("#adminSetupForm").hidden = true;
+    $("#adminPasswordForm").hidden = false;
+  };
+  $("#adminSetupForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const email = $("#setupAdminEmail").value.trim().toLowerCase();
+    if (!email) return;
+    localStorage.setItem(ADMIN_EMAIL_KEY, email);
+    $("#loginMessage").textContent = "Password link भेजा जा रहा है...";
+    const { error } = await cloudDb.auth.resetPasswordForEmail(email, { redirectTo: location.href.split("#")[0] });
+    $("#loginMessage").textContent = error ? error.message : "Email में आए password-setting link को खोलें। OTP नहीं लगेगा।";
+  });
+  $("#newPasswordForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const password = $("#newAdminPassword").value;
+    const { data, error } = await cloudDb.auth.updateUser({ password });
+    if (error) { $("#loginMessage").textContent = error.message; return; }
+    if (data.user?.email) localStorage.setItem(ADMIN_EMAIL_KEY, data.user.email.toLowerCase());
+    $("#loginMessage").textContent = "Password save हो गया। अब admin ID से login करें।";
+    await cloudDb.auth.signOut();
+    location.reload();
   });
   $("#refreshBtn").onclick = () => fetchAll().catch((error) => $("#dashboardStatus").textContent = error.message);
   $("#markAllReadBtn").onclick = () => { localStorage.setItem(READ_KEY, new Date().toISOString()); renderStats(); };
