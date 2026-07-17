@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="DK builds practical web apps, Excel automation tools, quality dashboards and business workflow solutions." />
+  <meta name="theme-color" content="#07111f" />
+  <title>DK | Web Apps & Business Automation</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --bg-2: #0b1728;
+      --card: rgba(16, 34, 55, 0.72);
+      --line: rgba(255, 255, 255, 0.1);
+      --text: #f7fbff;
+      --muted: #aebfd1;
+      --cyan: #55e6ff;
+      --blue: #6f8cff;
+      --green: #5df2b5;
+      --shadow: 0 30px 80px rgba(0, 0, 0, 0.38);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 15% 15%, rgba(85, 230, 255, 0.13), transparent 28%),
+        radial-gradient(circle at 88% 12%, rgba(111, 140, 255, 0.17), transparent 30%),
+        linear-gradient(145deg, var(--bg), var(--bg-2));
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.22;
+      background-image:
+        linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: linear-gradient(to bottom, black, transparent 85%);
+    }
+
+    a { color: inherit; text-decoration: none; }
+    .wrap { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
+
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(18px);
+      background: rgba(7, 17, 31, 0.66);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .nav-inner {
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 900;
+      letter-spacing: .02em;
+    }
+
+    .logo {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      color: #05101d;
+      font-weight: 1000;
+      background: linear-gradient(135deg, var(--cyan), var(--green));
+      box-shadow: 0 10px 30px rgba(85, 230, 255, .25);
+    }
+
+    .nav-links { display: flex; align-items: center; gap: 22px; color: var(--muted); font-weight: 700; }
+    .nav-links a:hover { color: var(--text); }
+
+    .hero {
+      min-height: 680px;
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 52px;
+      align-items: center;
+      padding: 86px 0 70px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 13px;
+      border: 1px solid rgba(93, 242, 181, .24);
+      border-radius: 999px;
+      color: #bfffe5;
+      background: rgba(93, 242, 181, .08);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 16px var(--green);
+    }
+
+    h1 {
+      max-width: 780px;
+      margin: 20px 0 18px;
+      font-size: clamp(44px, 7vw, 82px);
+      line-height: .98;
+      letter-spacing: -.055em;
+    }
+
+    .gradient-text {
+      color: transparent;
+      background: linear-gradient(95deg, var(--cyan), #d9e2ff 47%, var(--green));
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+
+    .lead {
+      max-width: 700px;
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(17px, 2vw, 21px);
+      line-height: 1.75;
+    }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 13px; margin-top: 30px; }
+    .btn {
+      min-height: 52px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 0 19px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      font-weight: 850;
+      transition: .22s ease;
+    }
+    .btn:hover { transform: translateY(-3px); }
+    .btn-primary {
+      color: #06111d;
+      background: linear-gradient(135deg, var(--cyan), var(--green));
+      box-shadow: 0 15px 40px rgba(85, 230, 255, .18);
+    }
+    .btn-secondary { background: rgba(255,255,255,.045); }
+
+    .hero-card {
+      position: relative;
+      padding: 26px;
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      background: linear-gradient(145deg, rgba(20, 44, 70, .88), rgba(9, 23, 39, .74));
+      box-shadow: var(--shadow);
+      transform: perspective(1000px) rotateY(-6deg) rotateX(3deg);
+      animation: float 5s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%,100% { transform: perspective(1000px) rotateY(-6deg) rotateX(3deg) translateY(0); }
+      50% { transform: perspective(1000px) rotateY(-2deg) rotateX(1deg) translateY(-12px); }
+    }
+
+    .window-top { display: flex; gap: 7px; margin-bottom: 22px; }
+    .window-top span { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,.22); }
+    .code-line { height: 12px; margin: 13px 0; border-radius: 999px; background: rgba(255,255,255,.08); }
+    .code-line:nth-child(2n) { width: 78%; }
+    .code-line:nth-child(3n) { width: 62%; background: linear-gradient(90deg, rgba(85,230,255,.72), rgba(111,140,255,.25)); }
+    .mini-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-top: 24px; }
+    .mini {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,.035);
+    }
+    .mini strong { display: block; font-size: 24px; }
+    .mini span { color: var(--muted); font-size: 13px; }
+
+    section { padding: 76px 0; }
+    .section-kicker { color: var(--cyan); font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: .16em; }
+    h2 { margin: 10px 0 14px; font-size: clamp(32px, 5vw, 52px); letter-spacing: -.035em; }
+    .section-copy { max-width: 740px; color: var(--muted); line-height: 1.75; font-size: 17px; }
+
+    .services, .projects {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-top: 34px;
+    }
+
+    .card {
+      position: relative;
+      min-height: 220px;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: var(--card);
+      box-shadow: 0 18px 46px rgba(0,0,0,.18);
+      transition: .25s ease;
+      overflow: hidden;
+    }
+    .card:hover { transform: translateY(-7px); border-color: rgba(85,230,255,.35); }
+    .card::after {
+      content: "";
+      position: absolute;
+      width: 130px;
+      height: 130px;
+      right: -55px;
+      bottom: -55px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(85,230,255,.18), transparent 68%);
+    }
+    .icon {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      font-size: 22px;
+      background: rgba(85,230,255,.1);
+      border: 1px solid rgba(85,230,255,.16);
+    }
+    .card h3 { margin: 18px 0 10px; font-size: 21px; }
+    .card p { margin: 0; color: var(--muted); line-height: 1.65; }
+
+    .project-card { min-height: 290px; display: flex; flex-direction: column; }
+    .project-tag { width: fit-content; padding: 7px 10px; border-radius: 999px; color: #d9e5f3; font-size: 12px; font-weight: 850; background: rgba(255,255,255,.06); border: 1px solid var(--line); }
+    .project-card .project-link { margin-top: auto; padding-top: 22px; color: var(--cyan); font-weight: 850; }
+
+    .process {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-top: 32px;
+      counter-reset: step;
+    }
+    .step {
+      padding: 21px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.035);
+      border: 1px solid var(--line);
+    }
+    .step::before {
+      counter-increment: step;
+      content: "0" counter(step);
+      color: var(--cyan);
+      font-weight: 1000;
+      letter-spacing: .08em;
+    }
+    .step h3 { margin: 12px 0 8px; }
+    .step p { margin: 0; color: var(--muted); line-height: 1.6; }
+
+    .cta {
+      margin: 70px 0 82px;
+      padding: 48px;
+      border: 1px solid rgba(85,230,255,.2);
+      border-radius: 28px;
+      text-align: center;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(85,230,255,.13), transparent 28%),
+        radial-gradient(circle at 85% 80%, rgba(93,242,181,.12), transparent 30%),
+        rgba(10, 25, 42, .82);
+      box-shadow: var(--shadow);
+    }
+    .cta p { max-width: 680px; margin: 0 auto 24px; color: var(--muted); font-size: 18px; line-height: 1.7; }
+
+    footer { padding: 30px 0 42px; border-top: 1px solid var(--line); color: var(--muted); }
+    .footer-inner { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 64px; }
+      .hero-card { max-width: 620px; transform: none; animation: none; }
+      .services, .projects { grid-template-columns: repeat(2, 1fr); }
+      .process { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 620px) {
+      .wrap { width: min(100% - 22px, 1120px); }
+      .nav-links a:not(.keep) { display: none; }
+      .hero { padding-top: 46px; gap: 36px; }
+      h1 { font-size: clamp(43px, 15vw, 66px); }
+      .services, .projects, .process { grid-template-columns: 1fr; }
+      .cta { padding: 34px 20px; }
+      .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="wrap nav-inner">
+      <a class="brand" href="#top" aria-label="DK home">
+        <span class="logo">DK</span>
+        <span>Web & Automation</span>
+      </a>
+      <div class="nav-links">
+        <a href="#services">Services</a>
+        <a href="#projects">Projects</a>
+        <a class="keep" href="#contact">Contact</a>
+      </div>
+    </div>
+  </nav>
+
+  <main id="top">
+    <div class="wrap hero">
+      <div>
+        <div class="badge"><span class="dot"></span> Available for freelance projects</div>
+        <h1>Practical digital tools that make work <span class="gradient-text">faster and smarter.</span></h1>
+        <p class="lead">I build responsive web apps, Excel automation tools, quality dashboards and custom workflow solutions for businesses, teams and professionals.</p>
+        <div class="actions">
+          <a class="btn btn-primary" href="mailto:kale63633@gmail.com?subject=Project%20Inquiry%20from%20Instagram">Start a Project ↗</a>
+          <a class="btn btn-secondary" href="#projects">View My Work</a>
+          <a class="btn btn-secondary" href="https://github.com/datta5566" target="_blank" rel="noreferrer">GitHub Profile</a>
+        </div>
+      </div>
+
+      <div class="hero-card" aria-label="Developer dashboard illustration">
+        <div class="window-top"><span></span><span></span><span></span></div>
+        <div class="code-line"></div>
+        <div class="code-line"></div>
+        <div class="code-line"></div>
+        <div class="code-line"></div>
+        <div class="code-line"></div>
+        <div class="code-line"></div>
+        <div class="mini-grid">
+          <div class="mini"><strong>Web</strong><span>Responsive business apps</span></div>
+          <div class="mini"><strong>Excel</strong><span>Automation & reports</span></div>
+          <div class="mini"><strong>Quality</strong><span>Dashboards & tracking</span></div>
+          <div class="mini"><strong>Custom</strong><span>Made for your workflow</span></div>
+        </div>
+      </div>
+    </div>
+
+    <section id="services">
+      <div class="wrap">
+        <div class="section-kicker">Services</div>
+        <h2>Solutions built around real work.</h2>
+        <p class="section-copy">From a simple mobile-friendly tool to a complete internal dashboard, every solution is designed to be easy to use, practical and focused on the actual problem.</p>
+        <div class="services">
+          <article class="card"><div class="icon">🌐</div><h3>Business Web Apps</h3><p>Responsive tools for desktop and mobile, including forms, dashboards, admin panels and workflow applications.</p></article>
+          <article class="card"><div class="icon">📊</div><h3>Excel Automation</h3><p>Convert manual data into clean Excel reports, automated formats, downloadable files and useful summaries.</p></article>
+          <article class="card"><div class="icon">⚙️</div><h3>Workflow Automation</h3><p>Reduce repetitive work using custom forms, converters, barcode tools, file systems and data tracking solutions.</p></article>
+          <article class="card"><div class="icon">✅</div><h3>Quality Dashboards</h3><p>Rejection, rework, CAPA, defect and inspection dashboards designed for manufacturing and quality teams.</p></article>
+          <article class="card"><div class="icon">📱</div><h3>Mobile-Friendly Tools</h3><p>Web applications that work smoothly on phones, tablets, laptops and computers without complicated setup.</p></article>
+          <article class="card"><div class="icon">🧩</div><h3>Custom Development</h3><p>Have a unique idea? I can turn your process, format or daily problem into a simple working digital solution.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="projects">
+      <div class="wrap">
+        <div class="section-kicker">Selected Work</div>
+        <h2>Projects made for practical use.</h2>
+        <p class="section-copy">These tools were created to solve real reporting, quality and data-management problems.</p>
+        <div class="projects">
+          <article class="card project-card">
+            <span class="project-tag">Quality Management</span>
+            <h3>Rejection Management System</h3>
+            <p>A structured dashboard for rejection records, defect-wise tracking, monthly review and quality analysis.</p>
+            <a class="project-link" href="mailto:kale63633@gmail.com?subject=Rejection%20Management%20System%20Demo">Request private demo →</a>
+          </article>
+          <article class="card project-card">
+            <span class="project-tag">Excel Automation</span>
+            <h3>Kaizen Converter</h3>
+            <p>A multi-file browser tool that converts Kaizen records into clean, organized and downloadable Excel data.</p>
+            <a class="project-link" href="../kaizen/" target="_blank" rel="noreferrer">Open live project →</a>
+          </article>
+          <article class="card project-card">
+            <span class="project-tag">Safety Reporting</span>
+            <h3>UA / UC Message Converter</h3>
+            <p>Converts safety observation messages into a structured preview and Excel-ready reporting format.</p>
+            <a class="project-link" href="../ua-uc/" target="_blank" rel="noreferrer">Open live project →</a>
+          </article>
+          <article class="card project-card">
+            <span class="project-tag">File & Barcode System</span>
+            <h3>Digital File Store</h3>
+            <p>A custom concept for shift-wise file uploads, barcode scanning and organized record storage across multiple units.</p>
+            <a class="project-link" href="mailto:kale63633@gmail.com?subject=Digital%20File%20Store%20Project">Discuss this solution →</a>
+          </article>
+          <article class="card project-card">
+            <span class="project-tag">Manufacturing Analytics</span>
+            <h3>Monthly Quality Dashboard</h3>
+            <p>Monthly defect data, rejection trends and chart-based reporting designed for faster review and decisions.</p>
+            <a class="project-link" href="mailto:kale63633@gmail.com?subject=Quality%20Dashboard%20Project">Build a dashboard →</a>
+          </article>
+          <article class="card project-card">
+            <span class="project-tag">Your Idea</span>
+            <h3>Custom Project</h3>
+            <p>Share your current manual process, Excel format or workflow problem and get a solution designed around it.</p>
+            <a class="project-link" href="mailto:kale63633@gmail.com?subject=Custom%20Web%20Project%20Inquiry">Send your requirement →</a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-kicker">How It Works</div>
+        <h2>Simple process. Clear result.</h2>
+        <div class="process">
+          <div class="step"><h3>Share</h3><p>Explain your current problem, format or app idea.</p></div>
+          <div class="step"><h3>Plan</h3><p>I prepare the structure, features and practical workflow.</p></div>
+          <div class="step"><h3>Build</h3><p>Your responsive solution is developed and tested.</p></div>
+          <div class="step"><h3>Deliver</h3><p>You receive the working project with usage guidance.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="wrap" id="contact">
+      <div class="cta">
+        <div class="section-kicker">Let’s Work Together</div>
+        <h2>Have an idea or a daily work problem?</h2>
+        <p>Send your requirement and I will help turn it into a useful web app, Excel automation tool or business dashboard.</p>
+        <div class="actions" style="justify-content:center">
+          <a class="btn btn-primary" href="mailto:kale63633@gmail.com?subject=Project%20Inquiry%20from%20Instagram">Email Your Requirement ↗</a>
+          <a class="btn btn-secondary" href="https://github.com/datta5566" target="_blank" rel="noreferrer">See GitHub Work</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <span>© <span id="year"></span> DK Web & Automation</span>
+      <span>Web Apps • Excel Automation • Quality Dashboards</span>
+    </div>
+  </footer>
+
+  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>
