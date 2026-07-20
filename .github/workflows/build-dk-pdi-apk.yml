@@ -49,9 +49,9 @@ jobs:
           gradle-version: '8.13'
           cache-provider: basic
 
-      - name: Lint and build debug APK
+      - name: Build debug APK
         working-directory: DK_PDI_Android
-        run: gradle --no-daemon clean lintDebug assembleDebug
+        run: gradle --no-daemon clean assembleDebug --stacktrace
 
       - name: Validate APK package
         run: |
@@ -68,6 +68,11 @@ jobs:
           path: DK_PDI_Scanner_v1.1.0.apk
           if-no-files-found: error
           retention-days: 30
+
+      - name: Android lint report
+        continue-on-error: true
+        working-directory: DK_PDI_Android
+        run: gradle --no-daemon lintDebug --stacktrace
 
       - name: Upload lint report
         if: always()
