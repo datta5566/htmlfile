@@ -6,6 +6,10 @@ on:
     paths:
       - 'DK_PDI_Android/**'
       - '.github/workflows/build-dk-pdi-apk.yml'
+  pull_request:
+    paths:
+      - 'DK_PDI_Android/**'
+      - '.github/workflows/build-dk-pdi-apk.yml'
 
 permissions:
   contents: read
