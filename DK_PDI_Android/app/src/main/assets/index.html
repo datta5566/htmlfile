@@ -1,19 +1,203 @@
 <!doctype html>
 <html lang="hi">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#071126">
-<title>DK PDI Scanner</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#071126">
+  <title>DK PDI Scanner</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<section id="login" class="login"><div class="login-card glass"><div class="logo">PDI</div><p class="eyebrow">Quality Inspection Tool</p><h1>DK PDI Scanner</h1><p class="mut">Native camera scan • Auto-fill report • Open Knestfs</p><input id="password" type="password" placeholder="Password"><button id="loginBtn" class="btn blue" style="width:100%;margin-top:10px">Login</button><p class="mut">Default password: 12345</p></div></section>
-<div id="app" class="hidden"><div class="shell"><aside class="side glass no-print"><div class="brand"><div class="logo">PDI</div><div><h2>Quality Pro</h2><div class="eyebrow">Android Scanner</div></div></div><nav class="nav"><button data-tab="dashboard" class="active">📊 Dashboard</button><button data-tab="scanner">📷 Scanner</button><button data-tab="report">📋 PDI Report</button><button data-tab="history">🗂️ History</button></nav><button id="knestSide" class="btn purple">Open Knestfs</button><button id="logout" class="btn red">Logout</button></aside><main class="main"><header class="top glass no-print"><div><div class="eyebrow">Supplier Inward Inspection</div><h1>DK PDI Sticker Scanner</h1><div class="mut">QR scan → sticker data → measurements → automatic OK/NG</div></div><div class="actions"><button id="newBtn" class="btn orange">New Report</button><button id="exportBtn" class="btn blue">Export Excel</button></div></header>
-<section id="dashboard" class="panel active"><div class="stats"><div class="stat glass"><small>Saved Reports</small><b id="kpiReports">0</b></div><div class="stat glass"><small>Scanned Samples</small><b id="kpiScans">0</b></div><div class="stat glass"><small>OK Values</small><b id="kpiOk">0</b></div><div class="stat glass"><small>NG Values</small><b id="kpiNg">0</b></div></div><div class="grid"><article class="card glass"><div class="card-head"><div><h2>Fast Workflow</h2><div class="mut">Mobile camera से report तुरंत भरें</div></div><span class="badge">Ready</span></div><div class="btns"><button class="btn green" data-go="scanner">Scan Sticker</button><button class="btn blue" data-go="report">Open Report</button><button id="knestDash" class="btn purple">Open Knestfs</button></div><div class="notice">Native scanner केवल QR/Data Matrix पढ़ता है ताकि ऊपर का छोटा linear barcode पहले scan होकर अधूरा data न दे।</div></article><article class="card glass"><h2>Auto-Fill Logic</h2><p class="mut">Row 1 OK, फिर IPO, Part Description, Barcode, Length, Width और formula से Diagonal automatic आएगा।</p><div id="dashLast" class="data-grid"></div></article></div></section>
-<section id="scanner" class="panel no-print"><div class="grid"><article class="card glass"><div class="card-head"><div><h2>Native Camera Scanner</h2><div class="mut">QR को frame के बीच रखें</div></div><span class="badge">Google Scanner</span></div><div class="form-grid"><label>Report Side<select id="scanSide"><option value="supplier">Supplier</option><option value="knest">Knest</option></select></label><label>Sample No.<select id="sampleNo"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label></div><div class="scanner"><div><div class="scan-frame"></div><p id="scanStatus" class="mut">Scan Sticker दबाएँ</p></div></div><div class="btns" style="margin-top:12px"><button id="scanBtn" class="btn green">📷 Scan Sticker</button><button id="knestScan" class="btn purple">Open Knestfs</button></div><label style="margin-top:13px">Manual QR Data<textarea id="manual" rows="4" placeholder="37263547$3835$UNIT 2$KNEST$260$T$350$S25SBR179$(0.091)"></textarea></label><button id="parseBtn" class="btn blue" style="margin-top:9px;width:100%">Parse & Fill</button></article><article class="card glass"><div class="card-head"><div><h2>Sticker Data</h2><div class="mut">Report में connect होने वाली जानकारी</div></div><span id="scanBadge" class="badge">Not Scanned</span></div><div id="parsed" class="data-grid"></div></article></div></section>
-<section id="report" class="panel"><div class="report-toolbar no-print"><div><h2>PDI Cum Inward Report</h2><div class="mut">Measurement भरते ही OK/NG</div></div><div class="btns"><button id="visualOk" class="btn soft">Visual OK</button><button id="saveBtn" class="btn green">Save</button><button id="printBtn" class="btn purple">Print/PDF</button></div></div><div id="reportPage" class="report-page"><div class="report-head"><div class="report-logo"><b>k-nest</b><small>CONSTRUCTION TECH</small></div><div class="report-title">SUPPLIER PDI CUM INWARD INSPECTION REPORT (Outsource)</div><table class="meta"><tr><td>Format No.</td><td><input id="formatNo" value="KMPL/QMS/QAF-"></td></tr><tr><td>Rev No.</td><td><input id="revNo"></td></tr><tr><td>Rev Date</td><td><input id="revDate"></td></tr><tr><td>Ori. Date</td><td><input id="oriDate" value="01-12-2025"></td></tr></table></div><div class="report-fields"><label>Date<input id="date" type="date"></label><label>Supplier Name<input id="supplier"></label><label>Invoice No./DC No.<input id="invoice"></label><label>Qty<input id="qty" type="number"></label></div><div class="table-wrap"><table><thead><tr><th rowspan="2">Sr.</th><th rowspan="2">Check Points</th><th rowspan="2">Specification / Required</th><th rowspan="2">Method</th><th colspan="5">Observation - Supplier</th><th colspan="5">Observation - Knest</th></tr><tr><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr></thead><tbody id="reportBody"></tbody></table></div><div class="bottom-fields"><label>Supplier Inspector<input id="supplierInspector"></label><label>Knest Inspector<input id="knestInspector"></label><label>Approved By<input id="approvedBy"></label></div></div></section>
-<section id="history" class="panel no-print"><article class="card glass"><div class="card-head"><div><h2>Saved Reports</h2><div class="mut">Local mobile storage</div></div><button id="clearHistory" class="btn red">Clear</button></div><div id="historyList" class="history"></div></article></section>
-</main></div></div><div id="toast" class="toast"></div>
-<script src="app.js"></script>
-</body></html>
+  <section id="login" class="login">
+    <div class="login-card glass">
+      <div class="logo">PDI</div>
+      <p class="eyebrow">Quality Inspection Tool</p>
+      <h1>DK PDI Scanner</h1>
+      <p class="mut">Native QR scan • Auto-fill report • Open Knestfs</p>
+      <input id="password" type="password" inputmode="numeric" placeholder="Password">
+      <button id="loginBtn" class="btn blue full">Login</button>
+      <p class="mut tiny">Default password: 12345</p>
+    </div>
+  </section>
+
+  <div id="app" class="hidden">
+    <div class="shell">
+      <aside class="side glass no-print">
+        <div class="brand">
+          <div class="logo">PDI</div>
+          <div><h2>Quality Pro</h2><div class="eyebrow">Android Scanner</div></div>
+        </div>
+        <nav class="nav">
+          <button data-tab="dashboard" class="active">📊 Dashboard</button>
+          <button data-tab="scanner">📷 Scanner</button>
+          <button data-tab="report">📋 PDI Report</button>
+          <button data-tab="history">🗂️ History</button>
+        </nav>
+        <button id="knestSide" class="btn purple">Open Knestfs</button>
+        <button id="logout" class="btn red">Logout</button>
+      </aside>
+
+      <main class="main">
+        <header class="top glass no-print">
+          <div>
+            <div class="eyebrow">Supplier Inward Inspection</div>
+            <h1>DK PDI Sticker Scanner</h1>
+            <div class="mut">QR scan → sticker data → measurements → automatic OK/NG</div>
+          </div>
+          <div class="actions">
+            <button id="newBtn" class="btn orange">New Report</button>
+            <button id="exportBtn" class="btn blue">Export Excel</button>
+          </div>
+        </header>
+
+        <section id="dashboard" class="panel active">
+          <div class="stats">
+            <div class="stat glass"><small>Saved Reports</small><b id="kpiReports">0</b></div>
+            <div class="stat glass"><small>Scanned Samples</small><b id="kpiScans">0</b></div>
+            <div class="stat glass"><small>OK Values</small><b id="kpiOk">0</b></div>
+            <div class="stat glass"><small>NG Values</small><b id="kpiNg">0</b></div>
+          </div>
+          <div class="grid">
+            <article class="card glass">
+              <div class="card-head">
+                <div><h2>Fast Workflow</h2><div class="mut">Mobile camera से report तुरंत भरें</div></div>
+                <span class="badge">Ready</span>
+              </div>
+              <div class="btns">
+                <button class="btn green" data-go="scanner">Scan Sticker</button>
+                <button class="btn blue" data-go="report">Open Report</button>
+                <button id="knestDash" class="btn purple">Open Knestfs</button>
+              </div>
+              <div class="notice">Scanner केवल QR/Data Matrix पढ़ता है, इसलिए ऊपर का छोटा linear barcode गलती से नहीं चुना जाएगा।</div>
+            </article>
+            <article class="card glass">
+              <h2>Last Sticker</h2>
+              <p class="mut">Latest scanned sticker data</p>
+              <div id="dashLast" class="data-grid"></div>
+            </article>
+          </div>
+        </section>
+
+        <section id="scanner" class="panel no-print">
+          <div class="grid">
+            <article class="card glass">
+              <div class="card-head">
+                <div><h2>Native Camera Scanner</h2><div class="mut">QR को frame के बीच रखें</div></div>
+                <span class="badge">Google Scanner</span>
+              </div>
+              <div class="form-grid">
+                <label>Report Side
+                  <select id="scanSide"><option value="supplier">Supplier</option><option value="knest">Knest</option></select>
+                </label>
+                <label>Sample No.
+                  <select id="sampleNo"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+                </label>
+              </div>
+              <div class="scanner">
+                <div><div class="scan-frame"></div><p id="scanStatus" class="mut">Scan Sticker दबाएँ</p></div>
+              </div>
+              <div class="btns scanner-actions">
+                <button id="scanBtn" class="btn green">📷 Scan Sticker</button>
+                <button id="knestScan" class="btn purple">Open Knestfs</button>
+              </div>
+              <label>Manual QR Data
+                <textarea id="manual" rows="4" placeholder="37263547$3835$UNIT 2$KNEST$260$T$350$S25SBR179$(0.091)"></textarea>
+              </label>
+              <button id="parseBtn" class="btn blue full">Parse & Fill</button>
+            </article>
+
+            <article class="card glass">
+              <div class="card-head">
+                <div><h2>Sticker Data</h2><div class="mut">Report से connected जानकारी</div></div>
+                <span id="scanBadge" class="badge">Not Scanned</span>
+              </div>
+              <div id="parsed" class="data-grid"></div>
+            </article>
+          </div>
+        </section>
+
+        <section id="report" class="panel">
+          <div class="report-toolbar no-print">
+            <div>
+              <h2>PDI Cum Inward Report</h2>
+              <div class="mut">Measurement भरते ही OK/NG</div>
+            </div>
+            <div class="btns">
+              <span id="reportResult" class="result pending-result">PENDING</span>
+              <button id="visualOk" class="btn soft">Visual OK</button>
+              <button id="saveBtn" class="btn green">Save</button>
+              <button id="printBtn" class="btn purple">Print/PDF</button>
+            </div>
+          </div>
+
+          <div id="reportPage" class="report-page">
+            <div class="report-head">
+              <div class="report-logo"><b>k-nest</b><small>CONSTRUCTION TECH</small></div>
+              <div class="report-title">SUPPLIER PDI CUM INWARD INSPECTION REPORT (Outsource)</div>
+              <table class="meta">
+                <tr><td>Format No.</td><td><input id="formatNo" value="KMPL/QMS/QAF-"></td></tr>
+                <tr><td>Rev No.</td><td><input id="revNo"></td></tr>
+                <tr><td>Rev Date</td><td><input id="revDate"></td></tr>
+                <tr><td>Ori. Date</td><td><input id="oriDate" value="01-12-2025"></td></tr>
+              </table>
+            </div>
+
+            <div class="report-fields">
+              <label>Date<input id="date" type="date"></label>
+              <label>Supplier Name<input id="supplier" placeholder="Outsource supplier"></label>
+              <label>Invoice No./DC No.<input id="invoice"></label>
+              <label>Qty<input id="qty" type="number" min="0"></label>
+            </div>
+
+            <div class="trace-fields">
+              <label>Project<input id="projectCode" readonly></label>
+              <label>Unit<input id="unitCode" readonly></label>
+              <label>Sticker Company<input id="stickerCompany" readonly></label>
+              <label>Full Part<input id="fullPart" readonly></label>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th rowspan="2">Sr.</th><th rowspan="2">Check Points</th><th rowspan="2">Specification / Required</th><th rowspan="2">Method</th>
+                    <th colspan="5">Observation - Supplier</th><th colspan="5">Observation - Knest</th><th colspan="2">Overall</th>
+                  </tr>
+                  <tr><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>Supplier</th><th>Knest</th></tr>
+                </thead>
+                <tbody id="reportBody"></tbody>
+              </table>
+            </div>
+
+            <div class="remark-row"><label>Remark<textarea id="remark" rows="2" placeholder="NG मिलने पर remark जरूरी है"></textarea></label></div>
+            <div class="report-note">Note: 1) All Dimensions are in mm. 2) Supplier के 5 samples और वही 5 samples inward में re-inspect करें.</div>
+            <div class="bottom-fields">
+              <label>Supplier Inspector<input id="supplierInspector"></label>
+              <label>Knest Inspector<input id="knestInspector"></label>
+              <label>Approved By<input id="approvedBy"></label>
+            </div>
+          </div>
+        </section>
+
+        <section id="history" class="panel no-print">
+          <article class="card glass">
+            <div class="card-head">
+              <div><h2>Saved Reports</h2><div class="mut">Local mobile storage</div></div>
+              <div class="btns">
+                <button id="backupBtn" class="btn blue">Backup JSON</button>
+                <label class="btn soft file-btn">Restore JSON<input id="restoreInput" type="file" accept="application/json,.json"></label>
+                <button id="clearHistory" class="btn red">Clear All</button>
+              </div>
+            </div>
+            <div id="historyList" class="history"></div>
+          </article>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <script src="sticker-parser.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

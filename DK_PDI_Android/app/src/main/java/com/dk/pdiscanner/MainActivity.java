@@ -1,24 +1,23 @@
 package com.dk.pdiscanner;
 
-import android.Manifest;
 import android.app.Activity;
-import android.app.PrintManager;
+import android.print.PrintManager;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.provider.MediaStore;
 import android.util.Base64;
 import android.view.View;
 import android.view.Window;
 import android.webkit.JavascriptInterface;
-import android.webkit.PermissionRequest;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -28,7 +27,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.webkit.WebViewAssetLoader;
 
 import com.google.mlkit.vision.barcode.common.Barcode;
@@ -41,10 +39,9 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 
 public class MainActivity extends Activity {
-    private static final int CAMERA_PERMISSION_REQUEST = 2101;
     private static final int FILE_CHOOSER_REQUEST = 2102;
+    private static final String LOCAL_ORIGIN = "https://appassets.androidplatform.net/";
     private WebView webView;
-    private PermissionRequest pendingPermissionRequest;
     private ValueCallback<Uri[]> fileChooserCallback;
     private GmsBarcodeScanner nativeScanner;
 
@@ -52,8 +49,8 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         configureSystemBars();
-        configureWebView();
         configureNativeScanner();
+        configureWebView();
     }
 
     private void configureSystemBars() {
@@ -84,8 +81,11 @@ public class MainActivity extends Activity {
         settings.setMediaPlaybackRequiresUserGesture(false);
         settings.setAllowContentAccess(true);
         settings.setAllowFileAccess(false);
-        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
-        settings.setUserAgentString(settings.getUserAgentString() + " DKPDI-Android/1.0");
+        settings.setAllowFileAccessFromFileURLs(false);
+        settings.setAllowUniversalAccessFromFileURLs(false);
+        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+        settings.setUserAgentString(settings.getUserAgentString() + " DKPDI-Android/1.1");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) settings.setSafeBrowsingEnabled(true);
 
         WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
                 .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
@@ -100,46 +100,22 @@ public class MainActivity extends Activity {
 
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                Uri uri = request.getUrl();
-                String url = uri.toString();
-                if (url.startsWith("https://appassets.androidplatform.net/")) return false;
-                if (url.startsWith("intent://")) {
-                    try {
-                        startActivity(Intent.parseUri(url, Intent.URI_INTENT_SCHEME));
-                    } catch (Exception error) {
-                        Toast.makeText(MainActivity.this, "Target app नहीं खुली।", Toast.LENGTH_SHORT).show();
-                    }
-                    return true;
-                }
-                if (url.startsWith("market://") || url.contains("play.google.com/store/apps")) {
-                    startActivity(new Intent(Intent.ACTION_VIEW, uri));
-                    return true;
-                }
-                return false;
+                return handleExternalUri(request.getUrl());
+            }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                return handleExternalUri(Uri.parse(url));
             }
         });
 
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
-            public void onPermissionRequest(PermissionRequest request) {
-                runOnUiThread(() -> {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-                            && checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                        pendingPermissionRequest = request;
-                        requestPermissions(new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_REQUEST);
-                        return;
-                    }
-                    request.grant(request.getResources());
-                });
-            }
-
-            @Override
-            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
+            public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
                 if (fileChooserCallback != null) fileChooserCallback.onReceiveValue(null);
-                fileChooserCallback = filePathCallback;
-                Intent chooser = fileChooserParams.createIntent();
+                fileChooserCallback = callback;
                 try {
-                    startActivityForResult(chooser, FILE_CHOOSER_REQUEST);
+                    startActivityForResult(params.createIntent(), FILE_CHOOSER_REQUEST);
                     return true;
                 } catch (Exception error) {
                     fileChooserCallback = null;
@@ -149,7 +125,33 @@ public class MainActivity extends Activity {
             }
         });
 
-        webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
+        webView.loadUrl(LOCAL_ORIGIN + "assets/index.html");
+    }
+
+    private boolean handleExternalUri(Uri uri) {
+        String url = uri.toString();
+        if (url.startsWith(LOCAL_ORIGIN)) return false;
+
+        try {
+            if (url.startsWith("intent://")) {
+                Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
+                startActivity(intent);
+                return true;
+            }
+
+            String scheme = uri.getScheme();
+            if ("http".equalsIgnoreCase(scheme)
+                    || "https".equalsIgnoreCase(scheme)
+                    || "market".equalsIgnoreCase(scheme)) {
+                startActivity(new Intent(Intent.ACTION_VIEW, uri));
+                return true;
+            }
+        } catch (Exception error) {
+            Toast.makeText(this, "Link नहीं खुली।", Toast.LENGTH_SHORT).show();
+            return true;
+        }
+
+        return true;
     }
 
     private void startNativeScanner() {
@@ -160,11 +162,23 @@ public class MainActivity extends Activity {
                         sendScannerError("QR data खाली मिला।");
                         return;
                     }
+                    vibrateSuccess();
                     String jsValue = org.json.JSONObject.quote(value);
                     webView.evaluateJavascript("window.dkHandleNativeScan(" + jsValue + ")", null);
                 })
                 .addOnCanceledListener(() -> sendScannerError("Scanner बंद किया गया।"))
-                .addOnFailureListener(error -> sendScannerError("Camera scanner error: " + error.getMessage())));
+                .addOnFailureListener(error -> sendScannerError(
+                        "Camera scanner error: " + (error.getMessage() == null ? "Google scanner module check करें।" : error.getMessage()))));
+    }
+
+    private void vibrateSuccess() {
+        Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        if (vibrator == null || !vibrator.hasVibrator()) return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator.vibrate(VibrationEffect.createOneShot(90, VibrationEffect.DEFAULT_AMPLITUDE));
+        } else {
+            vibrator.vibrate(90);
+        }
     }
 
     private void sendScannerError(String message) {
@@ -176,7 +190,7 @@ public class MainActivity extends Activity {
         runOnUiThread(() -> {
             Intent launch = getPackageManager().getLaunchIntentForPackage("com.knestfs");
             if (launch != null) {
-                launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                launch.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 startActivity(launch);
             } else {
                 openKnestfsStore();
@@ -200,7 +214,6 @@ public class MainActivity extends Activity {
             try {
                 byte[] bytes = Base64.decode(base64Data, Base64.DEFAULT);
                 String cleanName = filename.replaceAll("[\\\\/:*?\"<>|]", "_");
-                OutputStream stream;
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     ContentValues values = new ContentValues();
@@ -210,18 +223,18 @@ public class MainActivity extends Activity {
                     ContentResolver resolver = getContentResolver();
                     Uri savedUri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
                     if (savedUri == null) throw new IllegalStateException("Download location unavailable");
-                    stream = resolver.openOutputStream(savedUri);
+                    try (OutputStream stream = resolver.openOutputStream(savedUri)) {
+                        if (stream == null) throw new IllegalStateException("File stream unavailable");
+                        stream.write(bytes);
+                    }
                 } else {
                     File directory = new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "DK_PDI");
                     if (!directory.exists() && !directory.mkdirs()) throw new IllegalStateException("Folder create failed");
-                    File output = new File(directory, cleanName);
-                    stream = new FileOutputStream(output);
+                    try (OutputStream stream = new FileOutputStream(new File(directory, cleanName))) {
+                        stream.write(bytes);
+                    }
                 }
 
-                if (stream == null) throw new IllegalStateException("File stream unavailable");
-                stream.write(bytes);
-                stream.flush();
-                stream.close();
                 Toast.makeText(this, "Saved: Downloads/DK_PDI/" + cleanName, Toast.LENGTH_LONG).show();
             } catch (Exception error) {
                 Toast.makeText(this, "Save failed: " + error.getMessage(), Toast.LENGTH_LONG).show();
@@ -247,19 +260,6 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == CAMERA_PERMISSION_REQUEST && pendingPermissionRequest != null) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                pendingPermissionRequest.grant(pendingPermissionRequest.getResources());
-            } else {
-                pendingPermissionRequest.deny();
-            }
-            pendingPermissionRequest = null;
-        }
-    }
-
-    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == FILE_CHOOSER_REQUEST && fileChooserCallback != null) {
@@ -278,8 +278,10 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         if (webView != null) {
+            webView.removeJavascriptInterface("Android");
             webView.loadUrl("about:blank");
             webView.destroy();
+            webView = null;
         }
         super.onDestroy();
     }
