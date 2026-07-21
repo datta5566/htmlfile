@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a0a">
+  <title>DK AI Short Video Studio</title>
+  <style>
+    :root{
+      --bg:#090909;--card:#151515;--line:#303030;--text:#f6f7fb;--muted:#a7a7b0;
+      --blue:#2d6cff;--blue2:#6b5cff;--green:#20c77a;--orange:#ff9d2e;--red:#ff4d5f;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--text);background:
+      radial-gradient(circle at 5% 0%,rgba(45,108,255,.22),transparent 28%),
+      radial-gradient(circle at 100% 10%,rgba(107,92,255,.18),transparent 28%),var(--bg);}
+    .wrap{max-width:1100px;margin:auto;padding:20px}
+    header{padding:24px 0 14px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;font-weight:900;background:linear-gradient(135deg,var(--blue),var(--blue2));box-shadow:0 12px 40px rgba(45,108,255,.28)}
+    h1{margin:0;font-size:clamp(28px,5vw,52px);letter-spacing:-.04em}
+    .sub{color:var(--muted);margin:10px 0 0;max-width:760px;line-height:1.55}
+    .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:18px;margin-top:18px}
+    .card{background:rgba(21,21,21,.92);border:1px solid var(--line);border-radius:24px;padding:20px;box-shadow:0 24px 70px rgba(0,0,0,.34)}
+    .card h2{margin:0 0 14px;font-size:20px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    label{display:grid;gap:7px;color:#d7d7dd;font-size:13px;font-weight:700;margin-bottom:12px}
+    input,select,textarea{width:100%;border:1px solid var(--line);background:#0f0f0f;color:var(--text);border-radius:14px;padding:13px;outline:none;font:inherit}
+    input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(45,108,255,.12)}
+    textarea{min-height:110px;resize:vertical}
+    button,a.btn{border:0;border-radius:14px;padding:13px 16px;font:inherit;font-weight:800;color:white;text-decoration:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    .primary{background:linear-gradient(135deg,var(--blue),var(--blue2))}
+    .green{background:linear-gradient(135deg,#159b5c,var(--green))}
+    .soft{background:#202020;border:1px solid var(--line)!important}
+    .orange{background:linear-gradient(135deg,#df7f16,var(--orange))}
+    .full{width:100%}
+    .prompt{min-height:430px;white-space:pre-wrap;line-height:1.55;background:#0d0d0d;border:1px solid var(--line);border-radius:16px;padding:16px;color:#f5f5f5;overflow:auto}
+    .badge{display:inline-flex;padding:6px 10px;border-radius:999px;background:rgba(45,108,255,.13);border:1px solid rgba(45,108,255,.35);color:#a8c1ff;font-size:12px;font-weight:800;margin-bottom:12px}
+    .note{margin-top:14px;padding:13px;border-radius:14px;background:rgba(255,157,46,.08);border:1px solid rgba(255,157,46,.25);color:#ffd29d;line-height:1.45;font-size:13px}
+    .tips{display:grid;gap:10px;margin-top:12px}
+    .tip{padding:12px;border:1px solid var(--line);border-radius:14px;background:#101010;color:var(--muted);font-size:13px;line-height:1.5}
+    footer{color:var(--muted);font-size:12px;padding:22px 0;text-align:center}
+    .toast{position:fixed;right:18px;bottom:18px;background:#171717;border:1px solid var(--line);padding:13px 16px;border-radius:14px;display:none;z-index:10}
+    @media(max-width:780px){.grid,.row{grid-template-columns:1fr}.wrap{padding:12px}.card{padding:15px}.actions>*{width:100%}.prompt{min-height:340px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand"><div class="logo">DK</div><div><div class="badge">GitHub Tool • VidRush Launcher</div><h1>AI Short Video Studio</h1></div></div>
+      <p class="sub">Instagram Reels, YouTube Shorts और WhatsApp Status के लिए professional video brief तैयार करें। Prompt copy करें और VidRush में खोलकर video generate करें।</p>
+    </header>
+
+    <main class="grid">
+      <section class="card">
+        <h2>1. Video Brief तैयार करें</h2>
+        <label>Video Topic / विषय
+          <input id="topic" placeholder="उदाहरण: Aluminium formwork quality inspection के 5 जरूरी points">
+        </label>
+        <div class="row">
+          <label>Platform
+            <select id="platform"><option>Instagram Reel</option><option>YouTube Short</option><option>WhatsApp Status</option><option>LinkedIn Short Video</option></select>
+          </label>
+          <label>Duration
+            <select id="duration"><option>15 seconds</option><option selected>30 seconds</option><option>45 seconds</option><option>60 seconds</option></select>
+          </label>
+        </div>
+        <div class="row">
+          <label>Language
+            <select id="language"><option>Hindi</option><option>Hindi + English</option><option>English</option><option>Marathi</option></select>
+          </label>
+          <label>Video Style
+            <select id="style"><option>Professional and clean</option><option>Fast-paced viral</option><option>Cinematic</option><option>Educational explainer</option><option>Motivational</option><option>Product promotion</option></select>
+          </label>
+        </div>
+        <label>Target Audience
+          <input id="audience" placeholder="उदाहरण: Quality engineers, factory supervisors, freshers">
+        </label>
+        <label>Main Points
+          <textarea id="points" placeholder="हर point अलग line में लिखें...\n1. Sticker scan\n2. Automatic report fill\n3. OK/NG validation"></textarea>
+        </label>
+        <label>Call to Action
+          <input id="cta" placeholder="उदाहरण: Follow for more quality tips">
+        </label>
+        <label>Extra Instructions
+          <textarea id="extra" placeholder="Brand colors, voice style, captions, music mood, logo placement आदि"></textarea>
+        </label>
+        <div class="actions">
+          <button class="primary" id="generate">Generate VidRush Prompt</button>
+          <button class="soft" id="savePreset">Save Preset</button>
+          <button class="soft" id="clear">Clear</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>2. VidRush-ready Prompt</h2>
+        <div id="prompt" class="prompt">ऊपर details भरकर “Generate VidRush Prompt” दबाएँ।</div>
+        <div class="actions">
+          <button class="green" id="copy">Copy Prompt</button>
+          <a class="btn primary" href="https://vidrush.ai" target="_blank" rel="noopener noreferrer">Open VidRush</a>
+          <a class="btn soft" href="https://docs.vidrush.ai/docs/quick-start" target="_blank" rel="noopener noreferrer">Open Guide</a>
+        </div>
+        <div class="note"><b>Connection type:</b> यह सुरक्षित launcher integration है। VidRush में public generation API उपलब्ध न होने के कारण GitHub tool सीधे video generate नहीं करता; यह professional brief बनाकर VidRush खोलता है।</div>
+        <div class="tips">
+          <div class="tip"><b>Strong hook:</b> पहले 2 seconds में attention पकड़ने वाली line रखें।</div>
+          <div class="tip"><b>Vertical format:</b> Reels/Shorts के लिए 9:16 और बड़े readable captions मांगें।</div>
+          <div class="tip"><b>Credits बचाएँ:</b> Generation से पहले VidRush के Quote Statement में duration, model, language और credit estimate check करें।</div>
+        </div>
+      </section>
+    </main>
+    <footer>DK AI Short Video Studio • External video generation powered separately through VidRush</footer>
+  </div>
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const $=id=>document.getElementById(id);
+    const fields=['topic','platform','duration','language','style','audience','points','cta','extra'];
+    function toast(msg){const t=$('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2200)}
+    function value(id,fallback=''){return $(id).value.trim()||fallback}
+    function generate(){
+      const topic=value('topic');
+      if(!topic){toast('पहले video topic लिखें');$('topic').focus();return}
+      const points=value('points','Create 3 concise supporting points relevant to the topic.');
+      const cta=value('cta','End with a short, natural call to action.');
+      const extra=value('extra','Use clean visuals, smooth transitions, readable subtitles, and copyright-safe background music.');
+      const p=`Create a ${value('duration')} vertical 9:16 ${value('platform')} about: "${topic}".\n\nLanguage: ${value('language')}\nTarget audience: ${value('audience','General social-media audience')}\nStyle: ${value('style')}\n\nSTRUCTURE:\n1. Start with a powerful 1–2 second hook that immediately creates curiosity.\n2. Keep the narration concise and natural.\n3. Use these main points:\n${points}\n4. End with this call to action: ${cta}\n\nPRODUCTION INSTRUCTIONS:\n- Create a publish-ready short-form video.\n- Use fast, relevant B-roll and visually clear scene changes.\n- Add large, accurate, high-contrast captions inside the safe area.\n- Keep pacing engaging; remove pauses and filler.\n- Use a confident, friendly voice suitable for the audience.\n- Use copyright-safe background music at a low volume under narration.\n- Do not add unsupported facts or misleading claims.\n- Make the first and final frame visually strong.\n- ${extra}`;
+      $('prompt').textContent=p;
+      localStorage.setItem('dk_last_prompt',p);
+      toast('Prompt तैयार है');
+    }
+    $('generate').addEventListener('click',generate);
+    $('copy').addEventListener('click',async()=>{const p=$('prompt').textContent;if(p.startsWith('ऊपर'))return toast('पहले prompt generate करें');try{await navigator.clipboard.writeText(p);toast('Prompt copied')}catch{toast('Copy नहीं हुआ—text select करके copy करें')}});
+    $('savePreset').addEventListener('click',()=>{const data={};fields.forEach(f=>data[f]=$(f).value);localStorage.setItem('dk_video_preset',JSON.stringify(data));toast('Preset saved')});
+    $('clear').addEventListener('click',()=>{fields.forEach(f=>$(f).value='');$('platform').value='Instagram Reel';$('duration').value='30 seconds';$('language').value='Hindi';$('style').value='Professional and clean';$('prompt').textContent='ऊपर details भरकर “Generate VidRush Prompt” दबाएँ।';toast('Form cleared')});
+    try{const saved=JSON.parse(localStorage.getItem('dk_video_preset'));if(saved)fields.forEach(f=>{if(saved[f]!=null)$(f).value=saved[f]})}catch{}
+    const last=localStorage.getItem('dk_last_prompt');if(last)$('prompt').textContent=last;
+  </script>
+</body>
+</html>
