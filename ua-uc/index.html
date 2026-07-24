@@ -1,1 +1,91 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>UA UC Near Miss Converter</title><style>:root{--ink:#1a242d;--muted:#65727d;--line:#d9e2e8;--paper:#f5f7f8;--panel:#fff;--p:#1f6f8b;--d:#1f3a4a;--g:#2f7d4d;--r:#b42318}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:Arial,Segoe UI,sans-serif}.app{width:min(1220px,calc(100% - 28px));margin:auto;padding:24px 0 34px}.head{padding:28px;color:#fff;background:linear-gradient(135deg,var(--d),var(--p));border-radius:10px;margin-bottom:18px;box-shadow:0 16px 40px #1e36441c}.ey{color:#ffdc9d;font-size:12px;font-weight:900;letter-spacing:.08em}h1{font-size:clamp(28px,7vw,52px);line-height:1.05;margin:5px 0 8px}.work{display:grid;grid-template-columns:minmax(320px,430px) 1fr;gap:18px}.panel{padding:16px;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 16px 40px #1e36441c}.left{position:sticky;top:16px}label{display:grid;gap:7px;margin-bottom:13px;color:var(--d);font-weight:900}input,textarea,button{font:inherit}input,textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:10px;outline:none}textarea{min-height:420px;resize:vertical;font-family:Consolas,monospace}.actions{display:flex;flex-wrap:wrap;gap:10px}.btn{min-height:44px;padding:9px 14px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--d);font-weight:900;cursor:pointer}.primary{background:var(--p);border-color:var(--p);color:#fff}.success{background:var(--g);border-color:var(--g);color:#fff}.danger{background:var(--r);border-color:var(--r);color:#fff}.status{color:var(--muted);font-weight:800}.table{overflow:auto;max-height:690px;border:1px solid var(--line);border-radius:8px}table{width:100%;min-width:1160px;border-collapse:collapse;background:#fff;font-size:13px}th,td{padding:10px;border:1px solid var(--line);text-align:left;vertical-align:top}th{position:sticky;top:0;background:var(--d);color:#fff;white-space:nowrap}td[contenteditable=true]{background:#fffdf7}.empty{height:160px;text-align:center;color:var(--muted);font-weight:900}.login{display:none;min-height:100vh;padding:24px;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--d),var(--p))}body.lock .login{display:flex}body.lock .app{display:none}.login .panel{width:min(420px,100%)}.err{color:var(--r);font-weight:900}@media(max-width:920px){.work{grid-template-columns:1fr}.left{position:static}textarea{min-height:320px}}@media(max-width:560px){.app{width:min(100% - 20px,1220px);padding-top:10px}.actions,.btn{width:100%}}</style></head><body class="lock"><section class="login"><form class="panel" id="loginForm"><h2>Secure Login</h2><p>Enter user ID and 5 digit PIN.</p><label>User ID<input id="loginUser" value="Mr__Dk"></label><label>PIN<input id="loginPin" type="password" inputmode="numeric" maxlength="5"></label><button class="btn primary" type="submit">Login</button><p class="err" id="loginError"></p></form></section><main class="app"><header class="head"><div class="ey">UA / UC / Near Miss</div><h1>WhatsApp Message to Excel Converter</h1><p>Paste safety observation messages, check preview, save records, and download Excel.</p></header><section class="work"><section class="panel left"><h2>WhatsApp Messages</h2><p class="status">One or many messages can be pasted together.</p><label>Default Date<input id="defaultDate" type="date"></label><label>Paste Message<textarea id="messageInput" spellcheck="false"></textarea></label><div class="actions"><button class="btn primary" id="convertBtn" type="button">Convert Preview</button><button class="btn success" id="saveBtn" type="button">Save</button><button class="btn" id="showBtn" type="button">Show Saved</button><button class="btn success" id="downloadBtn" type="button" disabled>Download Excel</button><button class="btn danger" id="deleteBtn" type="button">Delete Saved</button><button class="btn" id="clearBtn" type="button">Clear</button></div><p class="status" id="status">Ready for WhatsApp text.</p></section><section class="panel"><h2>Excel Preview</h2><p class="status" id="rowCount">No records yet.</p><p class="status">Click any cell to edit value. Photo columns me file name type/ paste kar sakte ho.</p><div class="table"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div></section></section></main><script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script><script>const columns=["SR/NO","REPORTED BY ","DATE","TYPE","LOCATION","AREA","HAZARDS TYPE","OBSERVATION FOUND","CORRECTIVE ACTION","RESPONSIBLE","STATUS","REMARKS ","TARGET DATE","PHOTOS","CLOSED PHOTO"];const map=new Map([["name","REPORTED BY "],["reported by","REPORTED BY "],["type","TYPE"],["location","LOCATION"],["area","AREA"],["hazard type","HAZARDS TYPE"],["hazards type","HAZARDS TYPE"],["hazard","HAZARDS TYPE"],["observation","OBSERVATION FOUND"],["observation found","OBSERVATION FOUND"],["correction action","CORRECTIVE ACTION"],["corrective action","CORRECTIVE ACTION"],["responsible","RESPONSIBLE"],["status","STATUS"],["remark","REMARKS "],["remarks","REMARKS "],["target date","TARGET DATE"],["photo","PHOTOS"],["photos","PHOTOS"],["closed photo","CLOSED PHOTO"],["closed photos","CLOSED PHOTO"]]);const $=s=>document.querySelector(s);let records=[],showingSaved=false,currentBatchSaved=false;const savedKey="whatsapp-safety-saved-records-online-v1",sessionKey="whatsapp-safety-login-online-v1";function todayIso(){let n=new Date();return new Date(n.getTime()-n.getTimezoneOffset()*60000).toISOString().slice(0,10)}function fmt(v){if(!v)return"";let[y,m,d]=v.split("-");return`${d}-${m}-${y}`}function clean(v){return String(v||"").replace(/\n+/g," ").replace(/\s+/g," ").trim()}function key(v){return String(v||"").toLowerCase().replace(/\s+/g," ").replace(/[^a-z ]/g,"").trim()}function esc(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}function blank(i){let r=Object.fromEntries(columns.map(c=>[c,""]));r["SR/NO"]=i+1;r.DATE=fmt($("#defaultDate").value);return r}function splitMsgs(t){let c=String(t||"").replace(/\r/g,"").trim();if(!c)return[];let starts=[...c.matchAll(/(?:^|\n)\s*1\s*[-.)]\s*name\s*:-?/gi)].map(m=>m.index+(m[0].startsWith("\n")?1:0));if(starts.length<=1)return[c];return starts.map((s,i)=>c.slice(s,starts[i+1]??c.length).trim()).filter(Boolean)}function parseMsg(msg,i){let r=blank(i),labs=[...msg.matchAll(/(?:^|\n)[ \t]*\d+[ \t]*[-.)][ \t]*([^:\n]+?)[ \t]*:-?[ \t]*/g)];labs.forEach((m,idx)=>{let k=key(m[1]),col=map.get(k);if(!col){for(let[e,v]of [...map.entries()].sort((a,b)=>b[0].length-a[0].length)){if(k.includes(e)){col=v;break}}}if(!col)return;let s=m.index+m[0].length,e=labs[idx+1]?.index??msg.length;r[col]=clean(msg.slice(s,e))});return r}function renum(list){return list.map((r,i)=>({...Object.fromEntries(columns.map(c=>[c,r[c]??""])),"SR/NO":i+1}))}function saved(){try{let x=JSON.parse(localStorage.getItem(savedKey)||"[]");return Array.isArray(x)?renum(x):[]}catch(e){return[]}}function saveList(x){localStorage.setItem(savedKey,JSON.stringify(renum(x)))}function render(){thead.innerHTML="<tr>"+columns.map(c=>`<th>${esc(c)}</th>`).join("")+"</tr>";if(!records.length){tbody.innerHTML=`<tr><td class="empty" colspan="${columns.length}">Preview will appear here after conversion.</td></tr>`;rowCount.textContent="No records yet.";return}tbody.innerHTML=records.map((r,ri)=>"<tr>"+columns.map(c=>`<td contenteditable="true" data-row="${ri}" data-col="${esc(c)}">${esc(r[c])}</td>`).join("")+"</tr>").join("");rowCount.textContent=`${records.length} row${records.length===1?"":"s"} ready.`}function parseAll(){records=renum(splitMsgs(messageInput.value).map(parseMsg));showingSaved=false;currentBatchSaved=false;render();downloadBtn.disabled=records.length===0&&saved().length===0;status.textContent=records.length?`${records.length} record ready. Save dabao.`:"No valid WhatsApp message found."}function saveData(){if(messageInput.value.trim())parseAll();else if(!records.length||showingSaved){status.textContent=showingSaved?"Saved records already shown.":"Convert a message before saving.";return}if(!records.length)return;records=renum([...saved(),...records]);saveList(records);showingSaved=true;currentBatchSaved=true;messageInput.value="";downloadBtn.disabled=false;render();status.textContent=`${records.length} saved records shown.`}function showSaved(){records=saved();showingSaved=true;currentBatchSaved=true;downloadBtn.disabled=records.length===0;render();status.textContent=records.length?`${records.length} saved records shown.`:"No saved records yet."}function exportRows(){let s=saved();if(showingSaved)return s;if(!records.length)return s;if(currentBatchSaved)return s.length?s:records;return renum([...s,...records])}function downloadExcel(){if(typeof XLSX==="undefined"){alert("Internet ON karo, Excel engine load nahi hua.");return}let exp=exportRows();if(!exp.length){status.textContent="No records available for Excel download.";return}let data=exp.map((r,i)=>{let o={};columns.forEach(c=>o[c]=c==="SR/NO"?i+1:r[c]||"");return o});let ws=XLSX.utils.json_to_sheet(data,{header:columns});XLSX.utils.sheet_add_aoa(ws,[["DAILY SAFETY OBSERVATION SHEET FOR UA/UC"]],{origin:"A1"});ws["!merges"]=[{s:{r:0,c:0},e:{r:0,c:14}}];let wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"UA UC");XLSX.writeFile(wb,`ua-uc-nearmiss-saved-${fmt(defaultDate.value||todayIso())}.xlsx`);status.textContent=`${exp.length} records downloaded.`}defaultDate.value=todayIso();if(sessionStorage.getItem(sessionKey)==="yes")document.body.classList.remove("lock");downloadBtn.disabled=saved().length===0;render();loginForm.addEventListener("submit",e=>{e.preventDefault();if(loginUser.value.trim()!=="Mr__Dk"||!/^[0-9]{5}$/.test(loginPin.value.trim())){loginError.textContent="Invalid login. User ID Mr__Dk aur 5 digit PIN use karo.";return}sessionStorage.setItem(sessionKey,"yes");document.body.classList.remove("lock");loginPin.value="";loginError.textContent=""});convertBtn.onclick=parseAll;saveBtn.onclick=saveData;showBtn.onclick=showSaved;downloadBtn.onclick=downloadExcel;deleteBtn.onclick=()=>{if(confirm("Saved data delete karna hai?")){localStorage.removeItem(savedKey);records=[];showingSaved=false;currentBatchSaved=false;downloadBtn.disabled=true;render();status.textContent="Saved records deleted."}};clearBtn.onclick=()=>{messageInput.value="";records=[];showingSaved=false;currentBatchSaved=false;downloadBtn.disabled=saved().length===0;render();status.textContent="Ready for WhatsApp text."};tbody.addEventListener("input",e=>{let td=e.target.closest("td[contenteditable=true]");if(!td)return;let r=Number(td.dataset.row),c=td.dataset.col;if(records[r]&&c){records[r][c]=td.textContent.trim();if(showingSaved)saveList(records)}});</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>UA UC Near Miss Converter</title>
+  <style>
+    :root{--ink:#1a242d;--muted:#65727d;--line:#d9e2e8;--paper:#f5f7f8;--panel:#fff;--p:#1f6f8b;--d:#1f3a4a;--g:#2f7d4d;--r:#b42318;--amber:#a35c00}
+    *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:Arial,Segoe UI,sans-serif}
+    .app{width:min(1220px,calc(100% - 28px));margin:auto;padding:24px 0 34px}
+    .head{padding:28px;color:#fff;background:linear-gradient(135deg,var(--d),var(--p));border-radius:10px;margin-bottom:18px;box-shadow:0 16px 40px #1e36441c}
+    .ey{color:#ffdc9d;font-size:12px;font-weight:900;letter-spacing:.08em}
+    h1{font-size:clamp(28px,7vw,52px);line-height:1.05;margin:5px 0 8px}.work{display:grid;grid-template-columns:minmax(320px,430px) 1fr;gap:18px}
+    .panel{padding:16px;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 16px 40px #1e36441c}.left{position:sticky;top:16px}
+    .mode{border:1px solid var(--line);border-radius:10px;padding:13px;margin-bottom:14px;background:#f9fbfc}.mode h3{margin:0 0 7px}.mode p{margin:0 0 10px}
+    .upload{display:block;border:2px dashed #9bb5c3;border-radius:9px;padding:13px;background:#fff;cursor:pointer}.upload:hover{border-color:var(--p)}
+    .upload input{margin-top:9px}.privacy{color:var(--g);font-size:12px;font-weight:900}.import-meta{color:var(--amber);font-size:12px;font-weight:800;line-height:1.45}
+    label{display:grid;gap:7px;margin-bottom:13px;color:var(--d);font-weight:900}input,textarea,button{font:inherit}input,textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:10px;outline:none}
+    textarea{min-height:300px;resize:vertical;font-family:Consolas,monospace}.actions{display:flex;flex-wrap:wrap;gap:10px}
+    .btn{min-height:44px;padding:9px 14px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--d);font-weight:900;cursor:pointer}.btn:disabled{opacity:.5;cursor:not-allowed}
+    .primary{background:var(--p);border-color:var(--p);color:#fff}.success{background:var(--g);border-color:var(--g);color:#fff}.danger{background:var(--r);border-color:var(--r);color:#fff}
+    .status{color:var(--muted);font-weight:800}.table{overflow:auto;max-height:690px;border:1px solid var(--line);border-radius:8px}
+    table{width:100%;min-width:1160px;border-collapse:collapse;background:#fff;font-size:13px}th,td{padding:10px;border:1px solid var(--line);text-align:left;vertical-align:top}
+    th{position:sticky;top:0;background:var(--d);color:#fff;white-space:nowrap}td[contenteditable=true]{background:#fffdf7}.empty{height:160px;text-align:center;color:var(--muted);font-weight:900}
+    .login{display:none;min-height:100vh;padding:24px;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--d),var(--p))}body.lock .login{display:flex}body.lock .app{display:none}
+    .login .panel{width:min(420px,100%)}.err{color:var(--r);font-weight:900}
+    @media(max-width:920px){.work{grid-template-columns:1fr}.left{position:static}textarea{min-height:260px}}@media(max-width:560px){.app{width:min(100% - 20px,1220px);padding-top:10px}.actions,.btn{width:100%}}
+  </style>
+</head>
+<body class="lock">
+  <section class="login">
+    <form class="panel" id="loginForm">
+      <h2>Secure Login</h2>
+      <p>Enter user ID and 5 digit PIN.</p>
+      <label>User ID<input id="loginUser" value="Mr__Dk"></label>
+      <label>PIN<input id="loginPin" type="password" inputmode="numeric" maxlength="5"></label>
+      <button class="btn primary" type="submit">Login</button>
+      <p class="err" id="loginError"></p>
+    </form>
+  </section>
+
+  <main class="app">
+    <header class="head">
+      <div class="ey">UA / UC / Near Miss</div>
+      <h1>Safety Data to Excel Converter</h1>
+      <p>Convert WhatsApp messages or an existing department Excel file, check preview, save records, and download Excel.</p>
+    </header>
+    <section class="work">
+      <section class="panel left">
+        <div class="mode">
+          <h3>Option 1 — WhatsApp Messages</h3>
+          <p class="status">One or many messages can be pasted together.</p>
+          <label>Default Date<input id="defaultDate" type="date"></label>
+          <label>Paste Message<textarea id="messageInput" spellcheck="false"></textarea></label>
+          <button class="btn primary" id="convertBtn" type="button">Convert Message Preview</button>
+        </div>
+
+        <div class="mode">
+          <h3>Option 2 — Import Department Excel</h3>
+          <p class="status">Select an existing Excel/CSV file and convert its rows into the UA/UC preview.</p>
+          <label class="upload">Choose Excel File
+            <input id="excelFile" type="file" accept=".xlsx,.xls,.csv">
+          </label>
+          <button class="btn primary" id="importBtn" type="button">Convert Excel Preview</button>
+          <p class="privacy">🔒 File is processed only inside this browser.</p>
+          <p class="import-meta" id="importMeta"></p>
+        </div>
+
+        <div class="actions">
+          <button class="btn success" id="saveBtn" type="button">Save</button>
+          <button class="btn" id="showBtn" type="button">Show Saved</button>
+          <button class="btn success" id="downloadBtn" type="button" disabled>Download Excel</button>
+          <button class="btn danger" id="deleteBtn" type="button">Delete Saved</button>
+          <button class="btn" id="clearBtn" type="button">Clear</button>
+        </div>
+        <p class="status" id="status">Ready for WhatsApp text or Excel file.</p>
+      </section>
+
+      <section class="panel">
+        <h2>Excel Preview</h2>
+        <p class="status" id="rowCount">No records yet.</p>
+        <p class="status">Click any cell to edit its value before Save or Download.</p>
+        <div class="table"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
+      </section>
+    </section>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
