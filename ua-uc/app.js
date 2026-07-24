@@ -37,6 +37,7 @@ const $ = selector => document.querySelector(selector);
 let records = [];
 let showingSaved = false;
 let currentBatchSaved = false;
+let selectedType = "";
 const savedKey = "whatsapp-safety-saved-records-online-v1";
 const sessionKey = "whatsapp-safety-login-online-v1";
 const sessionTimeKey = "whatsapp-safety-login-time-v1";
@@ -63,6 +64,30 @@ function clean(value) {
 function safeExcelValue(value) {
   const text = String(value ?? "");
   return /^[=+\-@]/.test(text.trimStart()) ? `'${text}` : text;
+}
+
+function canonicalType(value) {
+  const type = normalized(value);
+  if (type === "ua" || type.includes("unsafe act")) return "UA";
+  if (type === "uc" || type.includes("unsafe condition")) return "UC";
+  if (type === "near miss" || type === "nearmiss" || type.includes("near miss")) return "NEAR MISS";
+  return String(value ?? "").trim().toUpperCase();
+}
+
+function filteredEntries(list = records) {
+  return list
+    .map((row, index) => ({ row, index }))
+    .filter(({ row }) => !selectedType || canonicalType(row.TYPE) === selectedType);
+}
+
+function updateTypeButtons() {
+  document.querySelectorAll("[data-type-filter]").forEach(button => {
+    const type = button.dataset.typeFilter;
+    const count = records.filter(row => canonicalType(row.TYPE) === type).length;
+    button.classList.toggle("active", selectedType === type);
+    button.setAttribute("aria-pressed", selectedType === type ? "true" : "false");
+    button.textContent = `${type} (${count})`;
+  });
 }
 
 function sessionValid() {
@@ -153,17 +178,26 @@ function saveList(list) {
 
 function render() {
   $("#thead").innerHTML = "<tr>" + columns.map(column => `<th>${esc(column)}</th>`).join("") + "</tr>";
+  updateTypeButtons();
   if (!records.length) {
     $("#tbody").innerHTML = `<tr><td class="empty" colspan="${columns.length}">Preview will appear here after conversion.</td></tr>`;
     $("#rowCount").textContent = "No records yet.";
     return;
   }
-  $("#tbody").innerHTML = records.map((row, rowIndex) =>
+  const visible = filteredEntries();
+  if (!visible.length) {
+    $("#tbody").innerHTML = `<tr><td class="empty" colspan="${columns.length}">No ${esc(selectedType)} records found.</td></tr>`;
+    $("#rowCount").textContent = `0 ${selectedType} records. Click the active button again to show all.`;
+    return;
+  }
+  $("#tbody").innerHTML = visible.map(({ row, index: rowIndex }) =>
     "<tr>" + columns.map(column =>
       `<td contenteditable="true" data-row="${rowIndex}" data-col="${esc(column)}">${esc(row[column])}</td>`
     ).join("") + "</tr>"
   ).join("");
-  $("#rowCount").textContent = `${records.length} row${records.length === 1 ? "" : "s"} ready.`;
+  $("#rowCount").textContent = selectedType
+    ? `${visible.length} ${selectedType} record${visible.length === 1 ? "" : "s"} ready for preview/download.`
+    : `${records.length} row${records.length === 1 ? "" : "s"} ready.`;
 }
 
 function parseAll() {
@@ -349,9 +383,14 @@ function downloadExcel() {
     alert("Internet ON karo, Excel engine load nahi hua.");
     return;
   }
-  const exportData = exportRows();
+  const allExportData = exportRows();
+  const exportData = selectedType
+    ? allExportData.filter(row => canonicalType(row.TYPE) === selectedType)
+    : allExportData;
   if (!exportData.length) {
-    $("#status").textContent = "No records available for Excel download.";
+    $("#status").textContent = selectedType
+      ? `No ${selectedType} records available for Excel download.`
+      : "No records available for Excel download.";
     return;
   }
   const data = exportData.map((row, index) => Object.fromEntries(columns.map(column => [
@@ -359,13 +398,19 @@ function downloadExcel() {
     column === "SR/NO" ? index + 1 : safeExcelValue(row[column] || "")
   ])));
   const worksheet = XLSX.utils.json_to_sheet(data, { header: columns });
-  XLSX.utils.sheet_add_aoa(worksheet, [["DAILY SAFETY OBSERVATION SHEET FOR UA/UC"]], { origin: "A1" });
+  const reportTitle = selectedType
+    ? `DAILY SAFETY OBSERVATION SHEET FOR ${selectedType}`
+    : "DAILY SAFETY OBSERVATION SHEET FOR UA/UC/NEAR MISS";
+  XLSX.utils.sheet_add_aoa(worksheet, [[reportTitle]], { origin: "A1" });
   worksheet["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 14 } }];
   worksheet["!cols"] = columns.map(column => ({ wch: ["OBSERVATION FOUND", "CORRECTIVE ACTION"].includes(column) ? 38 : 17 }));
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "UA UC");
-  XLSX.writeFile(workbook, `ua-uc-nearmiss-saved-${fmt($("#defaultDate").value || todayIso())}.xlsx`);
-  $("#status").textContent = `${exportData.length} records downloaded.`;
+  XLSX.utils.book_append_sheet(workbook, worksheet, selectedType || "ALL RECORDS");
+  const typePart = selectedType ? `-${selectedType.toLowerCase().replace(/\s+/g, "-")}` : "";
+  XLSX.writeFile(workbook, `ua-uc-nearmiss${typePart}-${fmt($("#defaultDate").value || todayIso())}.xlsx`);
+  $("#status").textContent = selectedType
+    ? `${exportData.length} ${selectedType} records downloaded.`
+    : `${exportData.length} records downloaded.`;
 }
 
 $("#defaultDate").value = todayIso();
@@ -411,6 +456,16 @@ $("#importBtn").onclick = importExcel;
 $("#saveBtn").onclick = saveData;
 $("#showBtn").onclick = showSaved;
 $("#downloadBtn").onclick = downloadExcel;
+document.querySelectorAll("[data-type-filter]").forEach(button => {
+  button.onclick = () => {
+    const type = button.dataset.typeFilter;
+    selectedType = selectedType === type ? "" : type;
+    render();
+    $("#status").textContent = selectedType
+      ? `${selectedType} filter selected. Download Excel will export only ${selectedType} records.`
+      : "Type filter cleared. All records are shown and ready for download.";
+  };
+});
 $("#deleteBtn").onclick = () => {
   if (confirm("Saved data delete karna hai?")) {
     localStorage.removeItem(savedKey);
@@ -429,6 +484,7 @@ $("#clearBtn").onclick = () => {
   records = [];
   showingSaved = false;
   currentBatchSaved = false;
+  selectedType = "";
   $("#downloadBtn").disabled = saved().length === 0;
   render();
   $("#status").textContent = "Ready for WhatsApp text or Excel file.";
