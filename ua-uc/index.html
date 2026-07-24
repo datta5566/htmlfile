@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#061521">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Safety Data Hub — UA / UC / Near Miss</title>
   <style>
     :root{
@@ -56,6 +57,7 @@
     .app{width:min(1450px,calc(100% - 36px));margin:auto;padding:24px 0 40px}
     .head{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:20px 22px;margin-bottom:18px;
       border:1px solid var(--line);border-radius:18px;background:rgba(7,27,38,.72);box-shadow:var(--shadow);backdrop-filter:blur(18px)}
+    .head-side{display:flex;align-items:center;justify-content:flex-end;gap:14px}.head-side .btn{min-width:96px;flex:0 0 auto}
     .title-row{display:flex;align-items:center;gap:15px}.title-row .brand-mark{flex:0 0 auto}.ey{color:var(--cyan);font-size:11px;font-weight:850;letter-spacing:.16em;text-transform:uppercase}
     .head h1{font-size:clamp(24px,3vw,34px);line-height:1.15;letter-spacing:-.03em;margin:3px 0 0}.head p{max-width:520px;margin:0;color:var(--muted);font-size:13px;line-height:1.55}
     .work{display:grid;grid-template-columns:minmax(330px,430px) 1fr;gap:18px}
@@ -79,7 +81,7 @@
     .empty{height:220px;text-align:center;vertical-align:middle!important;color:var(--muted);font-weight:750}
     .app .panel:last-child{min-width:0}
     svg.lucide{width:20px;height:20px;stroke-width:1.8}.brand-mark svg{width:23px;height:23px}.icon-wrap svg{width:28px;height:28px}.section-icon svg{width:17px;height:17px}
-    @media(max-width:980px){.login-shell{grid-template-columns:1fr;max-width:620px}.login-art{min-height:360px;padding:44px}.trust{margin-top:42px}.login-form-wrap{padding:44px}.work{grid-template-columns:1fr}.left{position:static}.head{align-items:flex-start;flex-direction:column}.head p{max-width:none}}
+    @media(max-width:980px){.login-shell{grid-template-columns:1fr;max-width:620px}.login-art{min-height:360px;padding:44px}.trust{margin-top:42px}.login-form-wrap{padding:44px}.work{grid-template-columns:1fr}.left{position:static}.head{align-items:flex-start;flex-direction:column}.head-side{width:100%;justify-content:space-between}.head p{max-width:none}}
     @media(max-width:600px){.login{padding:12px}.login-shell{border-radius:22px}.login-art{padding:32px 25px;min-height:330px}.login-form-wrap{padding:36px 25px}.hero-copy h1{font-size:42px}.trust{gap:12px;flex-wrap:wrap}.app{width:calc(100% - 20px);padding-top:10px}.head,.panel{border-radius:15px}.actions{grid-template-columns:1fr}.preview-head{align-items:flex-start;flex-direction:column}.edit-hint{text-align:left}textarea{min-height:235px}}
   </style>
 </head>
@@ -116,7 +118,10 @@
         <span class="brand-mark"><i data-lucide="shield-check"></i></span>
         <div><div class="ey">UA / UC / Near Miss</div><h1>Safety Data to Excel Converter</h1></div>
       </div>
-      <p>Convert WhatsApp messages or department Excel files, check the preview, save records, and download a clean workbook.</p>
+      <div class="head-side">
+        <p>Convert WhatsApp messages or department Excel files, check the preview, save records, and download a clean workbook.</p>
+        <button class="btn" id="logoutBtn" type="button">Log out</button>
+      </div>
     </header>
     <section class="work">
       <section class="panel left">
