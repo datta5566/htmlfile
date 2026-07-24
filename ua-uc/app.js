@@ -39,6 +39,10 @@ let showingSaved = false;
 let currentBatchSaved = false;
 const savedKey = "whatsapp-safety-saved-records-online-v1";
 const sessionKey = "whatsapp-safety-login-online-v1";
+const sessionTimeKey = "whatsapp-safety-login-time-v1";
+const loginAttemptKey = "whatsapp-safety-login-attempts-v1";
+const sessionDuration = 30 * 60 * 1000;
+const maxFileBytes = 10 * 1024 * 1024;
 
 function todayIso() {
   const now = new Date();
@@ -54,6 +58,24 @@ function fmt(value) {
 
 function clean(value) {
   return String(value ?? "").replace(/\n+/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function safeExcelValue(value) {
+  const text = String(value ?? "");
+  return /^[=+\-@]/.test(text.trimStart()) ? `'${text}` : text;
+}
+
+function sessionValid() {
+  const started = Number(sessionStorage.getItem(sessionTimeKey) || 0);
+  return sessionStorage.getItem(sessionKey) === "yes" && started > 0 && Date.now() - started < sessionDuration;
+}
+
+function logout(message = "") {
+  sessionStorage.removeItem(sessionKey);
+  sessionStorage.removeItem(sessionTimeKey);
+  document.body.classList.add("lock");
+  $("#loginPin").value = "";
+  $("#loginError").textContent = message;
 }
 
 function normalized(value) {
@@ -207,6 +229,17 @@ async function importExcel() {
     $("#status").textContent = "Pehle Excel/CSV file choose karo.";
     return;
   }
+  const extension = file.name.split(".").pop().toLowerCase();
+  if (!["xlsx", "xls", "csv"].includes(extension)) {
+    $("#status").textContent = "Only .xlsx, .xls, or .csv files are allowed.";
+    $("#excelFile").value = "";
+    return;
+  }
+  if (file.size > maxFileBytes) {
+    $("#status").textContent = "File is too large. Maximum allowed size is 10 MB.";
+    $("#excelFile").value = "";
+    return;
+  }
   if (typeof XLSX === "undefined") {
     alert("Internet ON karo, Excel engine load nahi hua.");
     return;
@@ -319,7 +352,10 @@ function downloadExcel() {
     $("#status").textContent = "No records available for Excel download.";
     return;
   }
-  const data = exportData.map((row, index) => Object.fromEntries(columns.map(column => [column, column === "SR/NO" ? index + 1 : row[column] || ""])));
+  const data = exportData.map((row, index) => Object.fromEntries(columns.map(column => [
+    column,
+    column === "SR/NO" ? index + 1 : safeExcelValue(row[column] || "")
+  ])));
   const worksheet = XLSX.utils.json_to_sheet(data, { header: columns });
   XLSX.utils.sheet_add_aoa(worksheet, [["DAILY SAFETY OBSERVATION SHEET FOR UA/UC"]], { origin: "A1" });
   worksheet["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 14 } }];
@@ -331,21 +367,42 @@ function downloadExcel() {
 }
 
 $("#defaultDate").value = todayIso();
-if (sessionStorage.getItem(sessionKey) === "yes") document.body.classList.remove("lock");
+if (sessionValid()) document.body.classList.remove("lock");
+else logout("");
 $("#downloadBtn").disabled = saved().length === 0;
 render();
 
 $("#loginForm").addEventListener("submit", event => {
   event.preventDefault();
-  if ($("#loginUser").value.trim() !== "Mr__Dk" || !/^[0-9]{5}$/.test($("#loginPin").value.trim())) {
-    $("#loginError").textContent = "Invalid login. User ID Mr__Dk aur 5 digit PIN use karo.";
+  const attempt = JSON.parse(sessionStorage.getItem(loginAttemptKey) || '{"count":0,"blockedUntil":0}');
+  if (Date.now() < attempt.blockedUntil) {
+    const seconds = Math.ceil((attempt.blockedUntil - Date.now()) / 1000);
+    $("#loginError").textContent = `Too many attempts. Try again in ${seconds} seconds.`;
     return;
   }
+  if ($("#loginUser").value.trim() !== "Mr__Dk" || !/^[0-9]{5}$/.test($("#loginPin").value.trim())) {
+    const count = attempt.count + 1;
+    const blockedUntil = count >= 5 ? Date.now() + 30000 : 0;
+    sessionStorage.setItem(loginAttemptKey, JSON.stringify({ count: blockedUntil ? 0 : count, blockedUntil }));
+    $("#loginError").textContent = blockedUntil
+      ? "Too many attempts. Login is locked for 30 seconds."
+      : `Invalid login. ${5 - count} attempt${5 - count === 1 ? "" : "s"} remaining.`;
+    return;
+  }
+  sessionStorage.removeItem(loginAttemptKey);
   sessionStorage.setItem(sessionKey, "yes");
+  sessionStorage.setItem(sessionTimeKey, String(Date.now()));
   document.body.classList.remove("lock");
   $("#loginPin").value = "";
   $("#loginError").textContent = "";
 });
+
+$("#logoutBtn").onclick = () => logout("You have logged out safely.");
+setInterval(() => {
+  if (!document.body.classList.contains("lock") && !sessionValid()) {
+    logout("Session expired after 30 minutes. Please log in again.");
+  }
+}, 60000);
 
 $("#convertBtn").onclick = parseAll;
 $("#importBtn").onclick = importExcel;
