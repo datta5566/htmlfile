@@ -1,11 +1,11 @@
 const columns = [
-  "SR/NO", "REPORTED BY ", "DATE", "TYPE", "LOCATION", "AREA",
+  "SR/NO", "NAME", "DATE", "TYPE", "LOCATION", "AREA",
   "HAZARDS TYPE", "OBSERVATION FOUND", "CORRECTIVE ACTION", "RESPONSIBLE",
   "STATUS", "REMARKS ", "TARGET DATE", "PHOTOS", "CLOSED PHOTO"
 ];
 
 const messageMap = new Map([
-  ["name", "REPORTED BY "], ["reported by", "REPORTED BY "], ["type", "TYPE"],
+  ["name", "NAME"], ["reported by", "NAME"], ["type", "TYPE"],
   ["location", "LOCATION"], ["area", "AREA"], ["hazard type", "HAZARDS TYPE"],
   ["hazards type", "HAZARDS TYPE"], ["hazard", "HAZARDS TYPE"],
   ["observation", "OBSERVATION FOUND"], ["observation found", "OBSERVATION FOUND"],
@@ -17,7 +17,7 @@ const messageMap = new Map([
 
 const importAliases = {
   "SR/NO": ["sr no", "srno", "serial no", "serial number", "s no", "sl no", "no"],
-  "REPORTED BY ": ["reported by", "report by", "reporter", "employee name", "name", "reported person", "observer", "inspector"],
+  "NAME": ["reported by", "report by", "reporter", "employee name", "name", "reported person", "observer", "inspector"],
   "DATE": ["date", "reported date", "observation date", "entry date"],
   "TYPE": ["type", "category", "ua uc", "ua uc type", "observation type", "unsafe type"],
   "LOCATION": ["location", "plant location", "place", "unit", "shop", "line"],
@@ -130,10 +130,12 @@ function parseMsg(message, index) {
 }
 
 function renum(list) {
-  return list.map((row, index) => ({
-    ...Object.fromEntries(columns.map(column => [column, row[column] ?? ""])),
-    "SR/NO": index + 1
-  }));
+  return list.map((row, index) => {
+    const normalizedRow = Object.fromEntries(columns.map(column => [column, row[column] ?? ""]));
+    normalizedRow.NAME = row.NAME ?? row["REPORTED BY "] ?? row["REPORTED BY"] ?? "";
+    normalizedRow["SR/NO"] = index + 1;
+    return normalizedRow;
+  });
 }
 
 function saved() {
