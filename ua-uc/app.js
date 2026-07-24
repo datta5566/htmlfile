@@ -126,10 +126,29 @@ function blank(index) {
   return row;
 }
 
+function normalizeBulkText(text) {
+  return String(text || "")
+    .replace(/\r/g, "")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(
+      /\[[^\]\n]{5,60}\]\s*[^:\n]{1,80}:\s*(?=(?:1\s*[-.)]\s*)?(?:name|reported by)\s*:-?)/gi,
+      "\n"
+    )
+    .replace(
+      /(?:^|\n)\s*\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}[^\n]{0,35}[-–]\s*[^:\n]{1,80}:\s*(?=(?:1\s*[-.)]\s*)?(?:name|reported by)\s*:-?)/gi,
+      "\n"
+    )
+    .replace(
+      /([^\n])[\t ]+(?=1\s*[-.)]\s*(?:name|reported by)\s*:-?)/gi,
+      "$1\n"
+    )
+    .trim();
+}
+
 function splitMsgs(text) {
-  const content = String(text || "").replace(/\r/g, "").trim();
+  const content = normalizeBulkText(text);
   if (!content) return [];
-  const starts = [...content.matchAll(/(?:^|\n)\s*1\s*[-.)]\s*name\s*:-?/gi)]
+  const starts = [...content.matchAll(/(?:^|\n)[ \t]*(?:1[ \t]*[-.)][ \t]*)?(?:name|reported by)[ \t]*:-?/gi)]
     .map(match => match.index + (match[0].startsWith("\n") ? 1 : 0));
   if (starts.length <= 1) return [content];
   return starts.map((start, index) => content.slice(start, starts[index + 1] ?? content.length).trim()).filter(Boolean);
@@ -137,7 +156,7 @@ function splitMsgs(text) {
 
 function parseMsg(message, index) {
   const row = blank(index);
-  const labels = [...message.matchAll(/(?:^|\n)[ \t]*\d+[ \t]*[-.)][ \t]*([^:\n]+?)[ \t]*:-?[ \t]*/g)];
+  const labels = [...message.matchAll(/(?:^|\n)[ \t]*(?:\d+[ \t]*[-.)][ \t]*)?([a-z][^:\n]{0,40}?)[ \t]*:-?[ \t]*/gi)];
   labels.forEach((match, labelIndex) => {
     const sourceKey = normalized(match[1]);
     let column = messageMap.get(sourceKey);
@@ -201,13 +220,23 @@ function render() {
 }
 
 function parseAll() {
-  records = renum(splitMsgs($("#messageInput").value).map(parseMsg));
+  const messages = splitMsgs($("#messageInput").value);
+  const parsed = messages.map(parseMsg);
+  const valid = parsed.filter(row =>
+    clean(row.NAME) !== "" ||
+    clean(row.TYPE) !== "" ||
+    clean(row["OBSERVATION FOUND"]) !== ""
+  );
+  records = renum(valid);
   showingSaved = false;
   currentBatchSaved = false;
   $("#importMeta").textContent = "";
   render();
   $("#downloadBtn").disabled = records.length === 0 && saved().length === 0;
-  $("#status").textContent = records.length ? `${records.length} message record ready. Save dabao.` : "No valid WhatsApp message found.";
+  const skipped = messages.length - valid.length;
+  $("#status").textContent = records.length
+    ? `${records.length} WhatsApp records ready${skipped ? `; ${skipped} empty/invalid message skipped` : ""}. Check preview, then Save dabao.`
+    : "No valid WhatsApp messages found. Make sure every message contains Name, Type, or Observation.";
 }
 
 function headerToColumn(header) {
