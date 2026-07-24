@@ -75,6 +75,9 @@
     #status{margin:14px 2px 0;padding:11px 12px;border-radius:10px;background:rgba(4,20,28,.56);border:1px solid rgba(136,220,230,.09)}
     .preview-head{display:flex;justify-content:space-between;align-items:end;gap:18px;margin:1px 2px 14px}.preview-head h2{font-size:20px;margin:0 0 5px}
     .preview-head p{margin:0}.edit-hint{text-align:right}.table{overflow:auto;max-height:760px;border:1px solid var(--line);border-radius:13px;background:#071923}
+    .preview-tools{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap}.type-filters{display:flex;gap:7px;flex-wrap:wrap}
+    .type-btn{min-height:36px;padding:7px 13px;border:1px solid rgba(84,214,226,.25);border-radius:10px;background:rgba(10,38,50,.85);color:#9fc4cc;font-size:11px;font-weight:850;letter-spacing:.04em;cursor:pointer;transition:.18s}
+    .type-btn:hover{border-color:rgba(84,214,226,.55);color:#e8fcff}.type-btn.active{background:linear-gradient(135deg,var(--cyan2),#177e94);border-color:var(--cyan);color:#fff;box-shadow:0 7px 20px rgba(25,176,196,.22)}
     table{width:100%;min-width:1260px;border-collapse:separate;border-spacing:0;font-size:12px}th,td{padding:11px 12px;border-right:1px solid rgba(131,218,227,.09);border-bottom:1px solid rgba(131,218,227,.09);text-align:left;vertical-align:top}
     th{position:sticky;top:0;z-index:2;background:#0d3443;color:#bdebf0;font-size:10px;letter-spacing:.055em;white-space:nowrap;text-transform:uppercase}
     td{color:#d3e7eb;background:rgba(7,27,37,.9);min-width:90px}tbody tr:hover td{background:rgba(12,45,57,.92)}td[contenteditable=true]:focus{background:rgba(20,77,90,.85)}
@@ -82,7 +85,7 @@
     .app .panel:last-child{min-width:0}
     svg.lucide{width:20px;height:20px;stroke-width:1.8}.brand-mark svg{width:23px;height:23px}.icon-wrap svg{width:28px;height:28px}.section-icon svg{width:17px;height:17px}
     @media(max-width:980px){.login-shell{grid-template-columns:1fr;max-width:620px}.login-art{min-height:360px;padding:44px}.trust{margin-top:42px}.login-form-wrap{padding:44px}.work{grid-template-columns:1fr}.left{position:static}.head{align-items:flex-start;flex-direction:column}.head-side{width:100%;justify-content:space-between}.head p{max-width:none}}
-    @media(max-width:600px){.login{padding:12px}.login-shell{border-radius:22px}.login-art{padding:32px 25px;min-height:330px}.login-form-wrap{padding:36px 25px}.hero-copy h1{font-size:42px}.trust{gap:12px;flex-wrap:wrap}.app{width:calc(100% - 20px);padding-top:10px}.head,.panel{border-radius:15px}.actions{grid-template-columns:1fr}.preview-head{align-items:flex-start;flex-direction:column}.edit-hint{text-align:left}textarea{min-height:235px}}
+    @media(max-width:600px){.login{padding:12px}.login-shell{border-radius:22px}.login-art{padding:32px 25px;min-height:330px}.login-form-wrap{padding:36px 25px}.hero-copy h1{font-size:42px}.trust{gap:12px;flex-wrap:wrap}.app{width:calc(100% - 20px);padding-top:10px}.head,.panel{border-radius:15px}.actions{grid-template-columns:1fr}.preview-head{align-items:flex-start;flex-direction:column}.preview-tools{align-items:flex-start;justify-content:flex-start}.edit-hint{text-align:left}.type-btn{flex:1}textarea{min-height:235px}}
   </style>
 </head>
 <body class="lock">
@@ -157,7 +160,14 @@
       <section class="panel">
         <div class="preview-head">
           <div><h2>Excel Preview</h2><p class="status" id="rowCount">No records yet.</p></div>
-          <p class="status edit-hint">Click any cell to edit before Save or Download.</p>
+          <div class="preview-tools">
+            <div class="type-filters" aria-label="Filter preview by type">
+              <button class="type-btn" data-type-filter="UA" type="button">UA</button>
+              <button class="type-btn" data-type-filter="UC" type="button">UC</button>
+              <button class="type-btn" data-type-filter="NEAR MISS" type="button">NEAR MISS</button>
+            </div>
+            <p class="status edit-hint">Select Type to preview and download.</p>
+          </div>
         </div>
         <div class="table"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
       </section>
@@ -166,7 +176,7 @@
 
   <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="./app.js?v=name-column-1"></script>
+  <script src="./app.js?v=type-filters-1"></script>
   <script>window.addEventListener("DOMContentLoaded",()=>window.lucide&&lucide.createIcons());</script>
 </body>
 </html>
