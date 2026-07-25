@@ -274,6 +274,13 @@ function dateValue(value) {
   return text;
 }
 
+function recordFingerprint(row) {
+  return [
+    row.NAME, row.DATE, row.TYPE, row.LOCATION, row.AREA,
+    row["OBSERVATION FOUND"], row["CORRECTIVE ACTION"]
+  ].map(value => normalized(value)).join("|");
+}
+
 function findHeaderRow(matrix) {
   let best = { index: -1, matches: 0, populated: 0 };
   matrix.slice(0, 25).forEach((row, index) => {
@@ -286,6 +293,130 @@ function findHeaderRow(matrix) {
   if (best.matches >= 2) return best;
   const fallback = matrix.slice(0, 25).findIndex(row => row.filter(cell => clean(cell) !== "").length >= 2);
   return { index: fallback, matches: 0, populated: fallback >= 0 ? matrix[fallback].filter(cell => clean(cell) !== "").length : 0 };
+}
+
+function chooseWorkbookSheet(workbook) {
+  let selected = null;
+  for (const sheetName of workbook.SheetNames) {
+    const matrix = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
+      header: 1, defval: "", raw: true
+    });
+    const header = findHeaderRow(matrix);
+    if (
+      !selected ||
+      header.matches > selected.header.matches ||
+      (header.matches === selected.header.matches && matrix.length > selected.matrix.length)
+    ) {
+      selected = { sheetName, matrix, header };
+    }
+  }
+  return selected;
+}
+
+async function updateMainExcel() {
+  if (!records.length) {
+    $("#status").textContent = "Pehle WhatsApp messages ya Excel file ko preview me convert karo.";
+    return;
+  }
+  if (typeof XLSX === "undefined") {
+    $("#status").textContent = "Excel engine load nahi hua. Internet connection check karo.";
+    return;
+  }
+  if (!window.showOpenFilePicker) {
+    $("#status").textContent = "Direct file update Chrome/Edge laptop browser me available hai. Abhi Download Excel use karein.";
+    return;
+  }
+
+  $("#updateMainBtn").disabled = true;
+  $("#status").textContent = "Main Excel file select karo. File Microsoft Excel me open ho to pehle close kar do.";
+  try {
+    const [handle] = await window.showOpenFilePicker({
+      multiple: false,
+      types: [{
+        description: "Main Excel Workbook",
+        accept: {
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+          "application/vnd.ms-excel": [".xls"]
+        }
+      }]
+    });
+    const file = await handle.getFile();
+    if (file.size > 50 * 1024 * 1024) throw new Error("Main Excel file 50 MB se badi hai.");
+
+    const bytes = await file.arrayBuffer();
+    const workbook = XLSX.read(bytes, { type: "array", cellDates: true, cellStyles: true });
+    const selected = chooseWorkbookSheet(workbook);
+    if (!selected || selected.header.index < 0 || selected.header.matches < 2) {
+      throw new Error("Main file me matching header row nahi mili.");
+    }
+
+    const headers = selected.matrix[selected.header.index].map(clean);
+    const mapping = headers.map(headerToColumn);
+    const existingFingerprints = new Set();
+    selected.matrix.slice(selected.header.index + 1).forEach(sourceRow => {
+      const existing = Object.fromEntries(columns.map(column => [column, ""]));
+      sourceRow.forEach((value, index) => {
+        const column = mapping[index];
+        if (column) existing[column] = clean(value);
+      });
+      const fingerprint = recordFingerprint(existing);
+      if (fingerprint.replace(/\|/g, "")) existingFingerprints.add(fingerprint);
+    });
+
+    const rowsToAdd = [];
+    let duplicateCount = 0;
+    records.forEach(record => {
+      const fingerprint = recordFingerprint(record);
+      if (existingFingerprints.has(fingerprint)) {
+        duplicateCount += 1;
+        return;
+      }
+      existingFingerprints.add(fingerprint);
+      rowsToAdd.push(headers.map((_, index) => {
+        const column = mapping[index];
+        if (!column) return "";
+        if (column === "SR/NO") return "";
+        return safeExcelValue(record[column] || "");
+      }));
+    });
+
+    if (!rowsToAdd.length) {
+      $("#status").textContent = `Koi new record nahi mila. ${duplicateCount} duplicate record main file me pehle se hai.`;
+      return;
+    }
+
+    const serialIndex = mapping.indexOf("SR/NO");
+    const existingDataRows = selected.matrix
+      .slice(selected.header.index + 1)
+      .filter(row => row.some(cell => clean(cell) !== "")).length;
+    rowsToAdd.forEach((row, index) => {
+      if (serialIndex >= 0) row[serialIndex] = existingDataRows + index + 1;
+    });
+
+    XLSX.utils.sheet_add_aoa(
+      workbook.Sheets[selected.sheetName],
+      rowsToAdd,
+      { origin: { r: selected.matrix.length, c: 0 } }
+    );
+    const extension = file.name.toLowerCase().endsWith(".xls") ? "xls" : "xlsx";
+    const output = XLSX.write(workbook, {
+      bookType: extension,
+      type: "array",
+      cellStyles: true
+    });
+    const writable = await handle.createWritable();
+    await writable.write(output);
+    await writable.close();
+    $("#status").textContent = `${rowsToAdd.length} new records directly ${file.name} me save hue${duplicateCount ? `; ${duplicateCount} duplicates skipped` : ""}.`;
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      $("#status").textContent = "Main Excel file selection cancel hui.";
+    } else {
+      $("#status").textContent = `Main Excel update failed: ${error.message} File Excel me open ho to close karke retry karein.`;
+    }
+  } finally {
+    $("#updateMainBtn").disabled = false;
+  }
 }
 
 async function importExcel() {
@@ -317,14 +448,7 @@ async function importExcel() {
     const workbook = XLSX.read(bytes, { type: "array", cellDates: true });
     if (!workbook.SheetNames.length) throw new Error("Workbook me sheet nahi mili.");
 
-    let selected = null;
-    for (const sheetName of workbook.SheetNames) {
-      const matrix = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: "", raw: true });
-      const candidate = findHeaderRow(matrix);
-      if (!selected || candidate.matches > selected.header.matches || (candidate.matches === selected.header.matches && matrix.length > selected.matrix.length)) {
-        selected = { sheetName, matrix, header: candidate };
-      }
-    }
+    const selected = chooseWorkbookSheet(workbook);
     if (!selected || selected.header.index < 0) throw new Error("Excel me header/data row nahi mili.");
 
     const headers = selected.matrix[selected.header.index].map(clean);
@@ -482,6 +606,7 @@ setInterval(() => {
 
 $("#convertBtn").onclick = parseAll;
 $("#importBtn").onclick = importExcel;
+$("#updateMainBtn").onclick = updateMainExcel;
 $("#saveBtn").onclick = saveData;
 $("#showBtn").onclick = showSaved;
 $("#downloadBtn").onclick = downloadExcel;
