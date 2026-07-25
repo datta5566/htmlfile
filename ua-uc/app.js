@@ -313,6 +313,66 @@ function chooseWorkbookSheet(workbook) {
   return selected;
 }
 
+async function mergeRecordsIntoWorkbook(file) {
+  if (file.size > 50 * 1024 * 1024) throw new Error("Main Excel file 50 MB se badi hai.");
+  const bytes = await file.arrayBuffer();
+  const workbook = XLSX.read(bytes, { type: "array", cellDates: true, cellStyles: true });
+  const selected = chooseWorkbookSheet(workbook);
+  if (!selected || selected.header.index < 0 || selected.header.matches < 2) {
+    throw new Error("Main file me matching header row nahi mili.");
+  }
+
+  const headers = selected.matrix[selected.header.index].map(clean);
+  const mapping = headers.map(headerToColumn);
+  const existingFingerprints = new Set();
+  selected.matrix.slice(selected.header.index + 1).forEach(sourceRow => {
+    const existing = Object.fromEntries(columns.map(column => [column, ""]));
+    sourceRow.forEach((value, index) => {
+      const column = mapping[index];
+      if (column) existing[column] = clean(value);
+    });
+    const fingerprint = recordFingerprint(existing);
+    if (fingerprint.replace(/\|/g, "")) existingFingerprints.add(fingerprint);
+  });
+
+  const rowsToAdd = [];
+  let duplicateCount = 0;
+  records.forEach(record => {
+    const fingerprint = recordFingerprint(record);
+    if (existingFingerprints.has(fingerprint)) {
+      duplicateCount += 1;
+      return;
+    }
+    existingFingerprints.add(fingerprint);
+    rowsToAdd.push(headers.map((_, index) => {
+      const column = mapping[index];
+      if (!column || column === "SR/NO") return "";
+      return safeExcelValue(record[column] || "");
+    }));
+  });
+
+  const serialIndex = mapping.indexOf("SR/NO");
+  const existingDataRows = selected.matrix
+    .slice(selected.header.index + 1)
+    .filter(row => row.some(cell => clean(cell) !== "")).length;
+  rowsToAdd.forEach((row, index) => {
+    if (serialIndex >= 0) row[serialIndex] = existingDataRows + index + 1;
+  });
+  if (rowsToAdd.length) {
+    XLSX.utils.sheet_add_aoa(
+      workbook.Sheets[selected.sheetName],
+      rowsToAdd,
+      { origin: { r: selected.matrix.length, c: 0 } }
+    );
+  }
+  return {
+    workbook,
+    addedCount: rowsToAdd.length,
+    duplicateCount,
+    bookType: file.name.toLowerCase().endsWith(".xls") ? "xls" : "xlsx"
+  };
+}
+
 async function updateMainExcel() {
   if (!records.length) {
     $("#status").textContent = "Pehle WhatsApp messages ya Excel file ko preview me convert karo.";
@@ -323,7 +383,9 @@ async function updateMainExcel() {
     return;
   }
   if (!window.showOpenFilePicker) {
-    $("#status").textContent = "Direct file update Chrome/Edge laptop browser me available hai. Abhi Download Excel use karein.";
+    $("#status").textContent = "Main Excel file choose karo. Updated copy same data ke saath download hogi.";
+    $("#mainExcelFallback").value = "";
+    $("#mainExcelFallback").click();
     return;
   }
 
@@ -341,81 +403,48 @@ async function updateMainExcel() {
       }]
     });
     const file = await handle.getFile();
-    if (file.size > 50 * 1024 * 1024) throw new Error("Main Excel file 50 MB se badi hai.");
-
-    const bytes = await file.arrayBuffer();
-    const workbook = XLSX.read(bytes, { type: "array", cellDates: true, cellStyles: true });
-    const selected = chooseWorkbookSheet(workbook);
-    if (!selected || selected.header.index < 0 || selected.header.matches < 2) {
-      throw new Error("Main file me matching header row nahi mili.");
-    }
-
-    const headers = selected.matrix[selected.header.index].map(clean);
-    const mapping = headers.map(headerToColumn);
-    const existingFingerprints = new Set();
-    selected.matrix.slice(selected.header.index + 1).forEach(sourceRow => {
-      const existing = Object.fromEntries(columns.map(column => [column, ""]));
-      sourceRow.forEach((value, index) => {
-        const column = mapping[index];
-        if (column) existing[column] = clean(value);
-      });
-      const fingerprint = recordFingerprint(existing);
-      if (fingerprint.replace(/\|/g, "")) existingFingerprints.add(fingerprint);
-    });
-
-    const rowsToAdd = [];
-    let duplicateCount = 0;
-    records.forEach(record => {
-      const fingerprint = recordFingerprint(record);
-      if (existingFingerprints.has(fingerprint)) {
-        duplicateCount += 1;
-        return;
-      }
-      existingFingerprints.add(fingerprint);
-      rowsToAdd.push(headers.map((_, index) => {
-        const column = mapping[index];
-        if (!column) return "";
-        if (column === "SR/NO") return "";
-        return safeExcelValue(record[column] || "");
-      }));
-    });
-
-    if (!rowsToAdd.length) {
-      $("#status").textContent = `Koi new record nahi mila. ${duplicateCount} duplicate record main file me pehle se hai.`;
+    const result = await mergeRecordsIntoWorkbook(file);
+    if (!result.addedCount) {
+      $("#status").textContent = `Koi new record nahi mila. ${result.duplicateCount} duplicate record main file me pehle se hai.`;
       return;
     }
-
-    const serialIndex = mapping.indexOf("SR/NO");
-    const existingDataRows = selected.matrix
-      .slice(selected.header.index + 1)
-      .filter(row => row.some(cell => clean(cell) !== "")).length;
-    rowsToAdd.forEach((row, index) => {
-      if (serialIndex >= 0) row[serialIndex] = existingDataRows + index + 1;
-    });
-
-    XLSX.utils.sheet_add_aoa(
-      workbook.Sheets[selected.sheetName],
-      rowsToAdd,
-      { origin: { r: selected.matrix.length, c: 0 } }
-    );
-    const extension = file.name.toLowerCase().endsWith(".xls") ? "xls" : "xlsx";
-    const output = XLSX.write(workbook, {
-      bookType: extension,
-      type: "array",
-      cellStyles: true
+    const output = XLSX.write(result.workbook, {
+      bookType: result.bookType, type: "array", cellStyles: true
     });
     const writable = await handle.createWritable();
     await writable.write(output);
     await writable.close();
-    $("#status").textContent = `${rowsToAdd.length} new records directly ${file.name} me save hue${duplicateCount ? `; ${duplicateCount} duplicates skipped` : ""}.`;
+    $("#status").textContent = `${result.addedCount} new records directly ${file.name} me save hue${result.duplicateCount ? `; ${result.duplicateCount} duplicates skipped` : ""}.`;
   } catch (error) {
-    if (error?.name === "AbortError") {
-      $("#status").textContent = "Main Excel file selection cancel hui.";
-    } else {
-      $("#status").textContent = `Main Excel update failed: ${error.message} File Excel me open ho to close karke retry karein.`;
-    }
+    if (error?.name === "AbortError") $("#status").textContent = "Main Excel file selection cancel hui.";
+    else $("#status").textContent = `Main Excel update failed: ${error.message} File Excel me open ho to close karke retry karein.`;
   } finally {
     $("#updateMainBtn").disabled = false;
+  }
+}
+
+async function updateMainExcelFallback() {
+  const file = $("#mainExcelFallback").files[0];
+  if (!file) return;
+  $("#updateMainBtn").disabled = true;
+  $("#status").textContent = "Main Excel file update ho rahi hai...";
+  try {
+    const result = await mergeRecordsIntoWorkbook(file);
+    if (!result.addedCount) {
+      $("#status").textContent = `Koi new record nahi mila. ${result.duplicateCount} duplicates pehle se hain.`;
+      return;
+    }
+    XLSX.writeFile(
+      result.workbook,
+      `UPDATED-${file.name}`,
+      { bookType: result.bookType, cellStyles: true }
+    );
+    $("#status").textContent = `${result.addedCount} new records add hue. UPDATED-${file.name} download hui; is file ko main file ki jagah use karein.`;
+  } catch (error) {
+    $("#status").textContent = `Main Excel update failed: ${error.message}`;
+  } finally {
+    $("#updateMainBtn").disabled = false;
+    $("#mainExcelFallback").value = "";
   }
 }
 
@@ -607,6 +636,7 @@ setInterval(() => {
 $("#convertBtn").onclick = parseAll;
 $("#importBtn").onclick = importExcel;
 $("#updateMainBtn").onclick = updateMainExcel;
+$("#mainExcelFallback").onchange = updateMainExcelFallback;
 $("#saveBtn").onclick = saveData;
 $("#showBtn").onclick = showSaved;
 $("#downloadBtn").onclick = downloadExcel;
