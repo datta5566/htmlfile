@@ -426,7 +426,16 @@ async function updateMainExcel() {
 async function updateMainExcelFallback() {
   const file = $("#mainExcelFallback").files[0];
   if (!file) return;
-  $("#updateMainBtn").disabled = true;
+  if (!records.length) {
+    $("#status").textContent = "Pehle WhatsApp messages ko Convert All Messages se preview me lao, phir main file choose karo.";
+    $("#mainExcelFallback").value = "";
+    return;
+  }
+  if (typeof XLSX === "undefined") {
+    $("#status").textContent = "Excel engine load nahi hua. Internet connection check karo.";
+    $("#mainExcelFallback").value = "";
+    return;
+  }
   $("#status").textContent = "Main Excel file update ho rahi hai...";
   try {
     const result = await mergeRecordsIntoWorkbook(file);
@@ -443,7 +452,6 @@ async function updateMainExcelFallback() {
   } catch (error) {
     $("#status").textContent = `Main Excel update failed: ${error.message}`;
   } finally {
-    $("#updateMainBtn").disabled = false;
     $("#mainExcelFallback").value = "";
   }
 }
@@ -635,7 +643,6 @@ setInterval(() => {
 
 $("#convertBtn").onclick = parseAll;
 $("#importBtn").onclick = importExcel;
-$("#updateMainBtn").onclick = updateMainExcel;
 $("#mainExcelFallback").onchange = updateMainExcelFallback;
 $("#saveBtn").onclick = saveData;
 $("#showBtn").onclick = showSaved;
