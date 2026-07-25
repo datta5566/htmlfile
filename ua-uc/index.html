@@ -70,6 +70,7 @@
     .privacy{color:var(--green);font-size:11px;font-weight:750}.import-meta{color:var(--amber);font-size:11px;font-weight:700;line-height:1.5}
     .actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.btn{min-height:43px;padding:10px 13px;border:1px solid var(--line);border-radius:11px;background:rgba(15,48,62,.78);color:#d9f3f6;font-weight:800;cursor:pointer;transition:transform .18s,border-color .18s,background .18s}
     .actions .wide{grid-column:1/-1}
+    .main-file-label{display:flex;align-items:center;justify-content:center;text-align:center}
     .btn:hover:not(:disabled){transform:translateY(-1px);border-color:rgba(84,214,226,.45);background:rgba(21,66,82,.9)}.btn:disabled{opacity:.42;cursor:not-allowed}
     .primary{background:linear-gradient(135deg,var(--cyan2),#177e94);border-color:rgba(101,231,240,.46);color:#f4feff;box-shadow:0 8px 25px rgba(23,164,184,.18)}
     .success{background:rgba(37,137,105,.6);border-color:rgba(80,218,165,.35)}.danger{background:rgba(145,45,59,.56);border-color:rgba(255,104,122,.3)}
@@ -149,8 +150,9 @@
         </div>
 
         <div class="actions">
-          <button class="btn primary wide" id="updateMainBtn" type="button">Update Main Excel File</button>
-          <input id="mainExcelFallback" type="file" accept=".xlsx,.xls" hidden>
+          <label class="btn primary wide main-file-label">Choose Main Excel &amp; Add Data
+            <input id="mainExcelFallback" type="file" accept=".xlsx,.xls" hidden>
+          </label>
           <button class="btn success" id="saveBtn" type="button">Save in Browser</button>
           <button class="btn" id="showBtn" type="button">Show Saved</button>
           <button class="btn success" id="downloadBtn" type="button" disabled>Download Excel</button>
@@ -179,7 +181,7 @@
 
   <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="./app.js?v=main-excel-fix-2"></script>
+  <script src="./app.js?v=main-file-picker-3"></script>
   <script>window.addEventListener("DOMContentLoaded",()=>window.lucide&&lucide.createIcons());</script>
 </body>
 </html>
