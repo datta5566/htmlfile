@@ -150,6 +150,7 @@
 
         <div class="actions">
           <button class="btn primary wide" id="updateMainBtn" type="button">Update Main Excel File</button>
+          <input id="mainExcelFallback" type="file" accept=".xlsx,.xls" hidden>
           <button class="btn success" id="saveBtn" type="button">Save in Browser</button>
           <button class="btn" id="showBtn" type="button">Show Saved</button>
           <button class="btn success" id="downloadBtn" type="button" disabled>Download Excel</button>
@@ -178,7 +179,7 @@
 
   <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="./app.js?v=main-excel-1"></script>
+  <script src="./app.js?v=main-excel-fix-2"></script>
   <script>window.addEventListener("DOMContentLoaded",()=>window.lucide&&lucide.createIcons());</script>
 </body>
 </html>
