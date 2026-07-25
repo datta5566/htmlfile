@@ -352,9 +352,18 @@ async function mergeRecordsIntoWorkbook(file) {
   });
 
   const serialIndex = mapping.indexOf("SR/NO");
-  const existingDataRows = selected.matrix
-    .slice(selected.header.index + 1)
-    .filter(row => row.some(cell => clean(cell) !== "")).length;
+  let existingDataRows = 0;
+  let lastDataRowIndex = selected.header.index;
+  selected.matrix.slice(selected.header.index + 1).forEach((row, offset) => {
+    const hasRecordData = row.some((cell, index) => {
+      const column = mapping[index];
+      return column && column !== "SR/NO" && clean(cell) !== "";
+    });
+    if (hasRecordData) {
+      existingDataRows += 1;
+      lastDataRowIndex = selected.header.index + 1 + offset;
+    }
+  });
   rowsToAdd.forEach((row, index) => {
     if (serialIndex >= 0) row[serialIndex] = existingDataRows + index + 1;
   });
@@ -362,13 +371,15 @@ async function mergeRecordsIntoWorkbook(file) {
     XLSX.utils.sheet_add_aoa(
       workbook.Sheets[selected.sheetName],
       rowsToAdd,
-      { origin: { r: selected.matrix.length, c: 0 } }
+      { origin: { r: lastDataRowIndex + 1, c: 0 } }
     );
   }
   return {
     workbook,
     addedCount: rowsToAdd.length,
     duplicateCount,
+    sheetName: selected.sheetName,
+    firstSavedRow: lastDataRowIndex + 2,
     bookType: file.name.toLowerCase().endsWith(".xls") ? "xls" : "xlsx"
   };
 }
@@ -414,7 +425,7 @@ async function updateMainExcel() {
     const writable = await handle.createWritable();
     await writable.write(output);
     await writable.close();
-    $("#status").textContent = `${result.addedCount} new records directly ${file.name} me save hue${result.duplicateCount ? `; ${result.duplicateCount} duplicates skipped` : ""}.`;
+    $("#status").textContent = `${result.addedCount} records ${file.name} ki ${result.sheetName} sheet me row ${result.firstSavedRow} se save hue${result.duplicateCount ? `; ${result.duplicateCount} duplicates skipped` : ""}.`;
   } catch (error) {
     if (error?.name === "AbortError") $("#status").textContent = "Main Excel file selection cancel hui.";
     else $("#status").textContent = `Main Excel update failed: ${error.message} File Excel me open ho to close karke retry karein.`;
@@ -448,7 +459,7 @@ async function updateMainExcelFallback() {
       `UPDATED-${file.name}`,
       { bookType: result.bookType, cellStyles: true }
     );
-    $("#status").textContent = `${result.addedCount} new records add hue. UPDATED-${file.name} download hui; is file ko main file ki jagah use karein.`;
+    $("#status").textContent = `${result.addedCount} records ${result.sheetName} sheet me header ke niche row ${result.firstSavedRow} se add hue. UPDATED-${file.name} download hui.`;
   } catch (error) {
     $("#status").textContent = `Main Excel update failed: ${error.message}`;
   } finally {
