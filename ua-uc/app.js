@@ -1,7 +1,7 @@
 const columns = [
   "SR/NO", "NAME", "DATE", "TYPE", "LOCATION", "AREA",
   "HAZARDS TYPE", "OBSERVATION FOUND", "CORRECTIVE ACTION", "RESPONSIBLE",
-  "STATUS", "REMARKS ", "TARGET DATE", "PHOTOS", "CLOSED PHOTO"
+  "STATUS", "REMARKS", "TARGET DATE", "PHOTOS", "CLOSED PHOTO"
 ];
 
 const messageMap = new Map([
@@ -10,8 +10,8 @@ const messageMap = new Map([
   ["hazards type", "HAZARDS TYPE"], ["hazard", "HAZARDS TYPE"],
   ["observation", "OBSERVATION FOUND"], ["observation found", "OBSERVATION FOUND"],
   ["correction action", "CORRECTIVE ACTION"], ["corrective action", "CORRECTIVE ACTION"],
-  ["responsible", "RESPONSIBLE"], ["status", "STATUS"], ["remark", "REMARKS "],
-  ["remarks", "REMARKS "], ["target date", "TARGET DATE"], ["photo", "PHOTOS"],
+  ["responsible", "RESPONSIBLE"], ["status", "STATUS"], ["remark", "REMARKS"],
+  ["remarks", "REMARKS"], ["target date", "TARGET DATE"], ["photo", "PHOTOS"],
   ["photos", "PHOTOS"], ["closed photo", "CLOSED PHOTO"], ["closed photos", "CLOSED PHOTO"]
 ]);
 
@@ -27,7 +27,7 @@ const importAliases = {
   "CORRECTIVE ACTION": ["corrective action", "correction action", "action taken", "action", "control action", "immediate action"],
   "RESPONSIBLE": ["responsible", "responsibility", "owner", "action owner", "responsible person", "assigned to"],
   "STATUS": ["status", "current status", "action status", "open close status"],
-  "REMARKS ": ["remarks", "remark", "comments", "comment", "notes"],
+  "REMARKS": ["remarks", "remark", "comments", "comment", "notes"],
   "TARGET DATE": ["target date", "due date", "completion date", "expected date", "closure date"],
   "PHOTOS": ["photos", "photo", "before photo", "image", "photo name"],
   "CLOSED PHOTO": ["closed photo", "closed photos", "after photo", "closure photo", "completed photo"]
@@ -44,6 +44,9 @@ const sessionTimeKey = "whatsapp-safety-login-time-v1";
 const loginAttemptKey = "whatsapp-safety-login-attempts-v1";
 const sessionDuration = 30 * 60 * 1000;
 const maxFileBytes = 10 * 1024 * 1024;
+const mainFileDbName = "safety-main-excel-db-v1";
+const mainFileStoreName = "handles";
+const mainFileHandleKey = "main-excel";
 
 function todayIso() {
   const now = new Date();
@@ -93,6 +96,42 @@ function updateTypeButtons() {
 function sessionValid() {
   const started = Number(sessionStorage.getItem(sessionTimeKey) || 0);
   return sessionStorage.getItem(sessionKey) === "yes" && started > 0 && Date.now() - started < sessionDuration;
+}
+
+function openMainFileDb() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(mainFileDbName, 1);
+    request.onupgradeneeded = () => {
+      if (!request.result.objectStoreNames.contains(mainFileStoreName)) {
+        request.result.createObjectStore(mainFileStoreName);
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function storeMainFileHandle(handle) {
+  const db = await openMainFileDb();
+  await new Promise((resolve, reject) => {
+    const transaction = db.transaction(mainFileStoreName, "readwrite");
+    transaction.objectStore(mainFileStoreName).put(handle, mainFileHandleKey);
+    transaction.oncomplete = resolve;
+    transaction.onerror = () => reject(transaction.error);
+  });
+  db.close();
+}
+
+async function getMainFileHandle() {
+  const db = await openMainFileDb();
+  const handle = await new Promise((resolve, reject) => {
+    const request = db.transaction(mainFileStoreName, "readonly")
+      .objectStore(mainFileStoreName).get(mainFileHandleKey);
+    request.onsuccess = () => resolve(request.result || null);
+    request.onerror = () => reject(request.error);
+  });
+  db.close();
+  return handle;
 }
 
 function logout(message = "") {
@@ -177,6 +216,7 @@ function renum(list) {
   return list.map((row, index) => {
     const normalizedRow = Object.fromEntries(columns.map(column => [column, row[column] ?? ""]));
     normalizedRow.NAME = row.NAME ?? row["REPORTED BY "] ?? row["REPORTED BY"] ?? "";
+    normalizedRow.REMARKS = row.REMARKS ?? row["REMARKS "] ?? "";
     normalizedRow["SR/NO"] = index + 1;
     return normalizedRow;
   });
@@ -467,6 +507,91 @@ async function updateMainExcelFallback() {
   }
 }
 
+async function connectMainExcel() {
+  if (!window.showOpenFilePicker) return;
+  try {
+    const [handle] = await window.showOpenFilePicker({
+      multiple: false,
+      types: [{
+        description: "Main Excel Workbook",
+        accept: {
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+          "application/vnd.ms-excel": [".xls"]
+        }
+      }]
+    });
+    const permission = await handle.requestPermission({ mode: "readwrite" });
+    if (permission !== "granted") throw new Error("Read/write permission nahi mili.");
+    const file = await handle.getFile();
+    const bytes = await file.arrayBuffer();
+    const workbook = XLSX.read(bytes, { type: "array", cellDates: true, cellStyles: true });
+    const selected = chooseWorkbookSheet(workbook);
+    if (!selected || selected.header.index < 0 || selected.header.matches < 2) {
+      throw new Error("Selected file me required headers nahi mile.");
+    }
+    await storeMainFileHandle(handle);
+    $("#mainFileState").textContent = `Connected: ${file.name}. Ab Save Directly button isi file ko update karega.`;
+    $("#status").textContent = `${file.name} Main Excel ke roop me connect ho gayi.`;
+  } catch (error) {
+    if (error?.name === "AbortError") $("#status").textContent = "Main Excel connection cancel hui.";
+    else $("#status").textContent = `Main Excel connect nahi hui: ${error.message}`;
+  }
+}
+
+async function saveDirectlyToMainExcel() {
+  if (!records.length) {
+    $("#status").textContent = "Pehle messages convert karke preview me records lao.";
+    return;
+  }
+  $("#saveDirectBtn").disabled = true;
+  try {
+    const handle = await getMainFileHandle();
+    if (!handle) {
+      $("#status").textContent = "Pehle Connect Main Excel — One Time button se file connect karo.";
+      return;
+    }
+    let permission = await handle.queryPermission({ mode: "readwrite" });
+    if (permission !== "granted") permission = await handle.requestPermission({ mode: "readwrite" });
+    if (permission !== "granted") throw new Error("Main file ki read/write permission nahi mili.");
+
+    const file = await handle.getFile();
+    const result = await mergeRecordsIntoWorkbook(file);
+    if (!result.addedCount) {
+      $("#status").textContent = `Koi new record nahi mila. ${result.duplicateCount} duplicate records pehle se hain.`;
+      return;
+    }
+    const output = XLSX.write(result.workbook, {
+      bookType: result.bookType, type: "array", cellStyles: true
+    });
+    const writable = await handle.createWritable();
+    await writable.write(output);
+    await writable.close();
+    $("#mainFileState").textContent = `Connected: ${file.name}`;
+    $("#status").textContent = `${result.addedCount} records directly ${file.name} ki ${result.sheetName} sheet me row ${result.firstSavedRow} se save hue.`;
+  } catch (error) {
+    $("#status").textContent = `Direct save failed: ${error.message} Excel file open ho to close karke retry karo.`;
+  } finally {
+    $("#saveDirectBtn").disabled = false;
+  }
+}
+
+async function refreshMainFileState() {
+  if (!window.showOpenFilePicker) {
+    document.body.classList.add("no-direct-file");
+    return;
+  }
+  try {
+    const handle = await getMainFileHandle();
+    if (!handle) return;
+    const permission = await handle.queryPermission({ mode: "readwrite" });
+    $("#mainFileState").textContent = permission === "granted"
+      ? `Connected: ${handle.name}`
+      : `Saved connection: ${handle.name}. Save करते समय permission allow करें.`;
+  } catch {
+    $("#mainFileState").textContent = "Main Excel is not connected yet.";
+  }
+}
+
 async function importExcel() {
   const file = $("#excelFile").files[0];
   if (!file) {
@@ -654,6 +779,8 @@ setInterval(() => {
 
 $("#convertBtn").onclick = parseAll;
 $("#importBtn").onclick = importExcel;
+$("#connectMainBtn").onclick = connectMainExcel;
+$("#saveDirectBtn").onclick = saveDirectlyToMainExcel;
 $("#mainExcelFallback").onchange = updateMainExcelFallback;
 $("#saveBtn").onclick = saveData;
 $("#showBtn").onclick = showSaved;
@@ -701,3 +828,4 @@ $("#tbody").addEventListener("input", event => {
     if (showingSaved) saveList(records);
   }
 });
+refreshMainFileState();
