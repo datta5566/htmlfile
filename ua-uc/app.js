@@ -279,6 +279,30 @@ function parseAll() {
     : "No valid WhatsApp messages found. Make sure every message contains Name, Type, or Observation.";
 }
 
+function wait(milliseconds) {
+  return new Promise(resolve => setTimeout(resolve, milliseconds));
+}
+
+async function convertWithAnimation() {
+  const button = $("#convertBtn");
+  const label = button.querySelector("span");
+  button.disabled = true;
+  button.classList.add("is-loading");
+  label.textContent = "Converting messages...";
+  $("#status").textContent = "WhatsApp messages process ho rahe hain...";
+  await wait(900);
+  parseAll();
+  button.classList.remove("is-loading");
+  button.disabled = false;
+  label.textContent = "Convert All Messages";
+  document.querySelector(".table").classList.remove("just-updated");
+  $("#status").classList.remove("status-flash");
+  requestAnimationFrame(() => {
+    document.querySelector(".table").classList.add("just-updated");
+    $("#status").classList.add("status-flash");
+  });
+}
+
 function headerToColumn(header) {
   const value = normalized(header);
   if (!value) return null;
@@ -777,7 +801,7 @@ setInterval(() => {
   }
 }, 60000);
 
-$("#convertBtn").onclick = parseAll;
+$("#convertBtn").onclick = convertWithAnimation;
 $("#importBtn").onclick = importExcel;
 $("#connectMainBtn").onclick = connectMainExcel;
 $("#saveDirectBtn").onclick = saveDirectlyToMainExcel;
@@ -829,3 +853,26 @@ $("#tbody").addEventListener("input", event => {
   }
 });
 refreshMainFileState();
+
+document.querySelectorAll(".btn, .type-btn").forEach(control => {
+  control.addEventListener("pointerdown", () => {
+    control.classList.remove("is-tapped");
+    requestAnimationFrame(() => control.classList.add("is-tapped"));
+  });
+  control.addEventListener("animationend", event => {
+    if (event.animationName === "buttonTap") control.classList.remove("is-tapped");
+  });
+});
+
+const loginShell = document.querySelector(".login-shell");
+if (loginShell && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  loginShell.addEventListener("pointermove", event => {
+    const box = loginShell.getBoundingClientRect();
+    const rotateY = ((event.clientX - box.left) / box.width - 0.5) * 4;
+    const rotateX = ((event.clientY - box.top) / box.height - 0.5) * -3;
+    loginShell.style.transform = `perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+  });
+  loginShell.addEventListener("pointerleave", () => {
+    loginShell.style.transform = "perspective(1200px) rotateX(0deg) rotateY(0deg)";
+  });
+}
