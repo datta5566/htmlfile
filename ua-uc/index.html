@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#061521">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'">
   <title>Safety Data Hub — UA / UC / Near Miss</title>
   <style>
     :root{
@@ -23,84 +23,28 @@
       linear-gradient(rgba(255,255,255,.024) 1px,transparent 1px),
       linear-gradient(90deg,rgba(255,255,255,.024) 1px,transparent 1px);background-size:42px 42px}
     button,input,textarea{font:inherit}
-    button:focus-visible,input:focus-visible,textarea:focus-visible,[contenteditable=true]:focus-visible{
-      outline:2px solid var(--cyan);outline-offset:2px}
-
+    button:focus-visible,input:focus-visible,textarea:focus-visible,[contenteditable=true]:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
     .login{display:none;min-height:100vh;padding:28px;align-items:center;justify-content:center;position:relative;overflow:hidden}
     body.lock .login{display:flex}body.lock .app{display:none}
-    .login-shell{width:min(1080px,100%);display:grid;grid-template-columns:1.08fr .92fr;min-height:620px;
-      border:1px solid rgba(111,224,235,.19);border-radius:30px;overflow:hidden;background:rgba(5,20,29,.68);
-      box-shadow:0 38px 120px rgba(0,0,0,.52),0 0 80px rgba(39,198,215,.07);backdrop-filter:blur(24px);
-      transform-style:preserve-3d;transition:transform .22s ease-out;animation:loginReveal .85s cubic-bezier(.2,.8,.2,1) both}
-    .login-art{position:relative;padding:64px;display:flex;flex-direction:column;justify-content:space-between;
-      background:linear-gradient(150deg,rgba(7,28,39,.94),rgba(9,54,67,.66));overflow:hidden}
-    .login-art:before{content:"";position:absolute;width:440px;height:440px;border-radius:50%;left:-150px;bottom:-190px;
-      background:rgba(44,207,221,.12);filter:blur(12px)}
+    .login-shell{width:min(1080px,100%);display:grid;grid-template-columns:1.08fr .92fr;min-height:620px;border:1px solid rgba(111,224,235,.19);border-radius:30px;overflow:hidden;background:rgba(5,20,29,.68);box-shadow:0 38px 120px rgba(0,0,0,.52),0 0 80px rgba(39,198,215,.07);backdrop-filter:blur(24px);transform-style:preserve-3d;transition:transform .22s ease-out;animation:loginReveal .85s cubic-bezier(.2,.8,.2,1) both}
+    .login-art{position:relative;padding:64px;display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(150deg,rgba(7,28,39,.94),rgba(9,54,67,.66));overflow:hidden}
+    .login-art:before{content:"";position:absolute;width:440px;height:440px;border-radius:50%;left:-150px;bottom:-190px;background:rgba(44,207,221,.12);filter:blur(12px)}
     .brand{display:flex;align-items:center;gap:12px;position:relative;z-index:1}
-    .brand-mark,.icon-wrap{display:grid;place-items:center;border:1px solid rgba(118,230,238,.28);
-      background:linear-gradient(145deg,rgba(61,211,225,.22),rgba(9,73,87,.28));color:var(--cyan);
-      box-shadow:inset 0 0 22px rgba(61,211,225,.08),0 0 30px rgba(61,211,225,.08)}
+    .brand-mark,.icon-wrap{display:grid;place-items:center;border:1px solid rgba(118,230,238,.28);background:linear-gradient(145deg,rgba(61,211,225,.22),rgba(9,73,87,.28));color:var(--cyan);box-shadow:inset 0 0 22px rgba(61,211,225,.08),0 0 30px rgba(61,211,225,.08)}
     .brand-mark{width:42px;height:42px;border-radius:13px}.login-art .brand-mark{animation:shieldFloat 3.8s ease-in-out infinite}.brand strong{letter-spacing:.08em;font-size:13px}
     .hero-copy{position:relative;z-index:1;max-width:520px}.kicker{color:var(--cyan);font-weight:800;font-size:12px;letter-spacing:.18em;text-transform:uppercase}
-    .hero-copy h1{font-size:clamp(40px,5vw,67px);line-height:.98;letter-spacing:-.045em;margin:16px 0 24px}
-    .hero-copy h1 span{display:block;color:#9aeaf0}.hero-copy p{font-size:16px;line-height:1.75;color:#9bb7c1;max-width:46ch;margin:0}
-    .trust{display:flex;gap:22px;position:relative;z-index:1;color:#89aab5;font-size:12px;font-weight:700}
-    .trust span{display:flex;align-items:center;gap:7px}.dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green)}
-    .login-form-wrap{display:flex;align-items:center;padding:64px;background:linear-gradient(180deg,rgba(10,34,46,.74),rgba(5,21,30,.88))}
-    .login-panel{width:100%;max-width:390px;margin:auto;transform:translateZ(28px)}.icon-wrap{width:56px;height:56px;border-radius:17px;margin-bottom:26px;animation:fingerprintFloat 3s ease-in-out infinite}
-    .login-panel h2{margin:0;font-size:32px;letter-spacing:-.025em}.login-panel>p{color:var(--muted);line-height:1.6;margin:10px 0 30px}
-    label{display:grid;gap:8px;margin-bottom:16px;color:#bad0d8;font-size:13px;font-weight:750}
-    input,textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:rgba(4,19,28,.64);color:var(--ink);transition:.2s}
-    input:hover,textarea:hover{border-color:rgba(91,214,225,.36)}textarea{min-height:270px;resize:vertical;font-family:"SFMono-Regular",Consolas,monospace;line-height:1.55}
-    .login-panel input{min-height:50px}.login-panel .btn{width:100%;margin-top:7px}.secure-note{display:flex;gap:8px;align-items:center;justify-content:center;color:#6f919d;font-size:11px;margin-top:18px}
-    .err{color:var(--red)!important;font-weight:800;min-height:20px;margin:14px 0 0!important}
-
-    .app{width:min(1450px,calc(100% - 36px));margin:auto;padding:24px 0 40px}
-    .head{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:20px 22px;margin-bottom:18px;
-      border:1px solid var(--line);border-radius:18px;background:rgba(7,27,38,.72);box-shadow:var(--shadow);backdrop-filter:blur(18px)}
-    .head-side{display:flex;align-items:center;justify-content:flex-end;gap:14px}.head-side .btn{min-width:96px;flex:0 0 auto}
-    .title-row{display:flex;align-items:center;gap:15px}.title-row .brand-mark{flex:0 0 auto}.ey{color:var(--cyan);font-size:11px;font-weight:850;letter-spacing:.16em;text-transform:uppercase}
-    .head h1{font-size:clamp(24px,3vw,34px);line-height:1.15;letter-spacing:-.03em;margin:3px 0 0}.head p{max-width:520px;margin:0;color:var(--muted);font-size:13px;line-height:1.55}
-    .work{display:grid;grid-template-columns:minmax(330px,430px) 1fr;gap:18px}
-    .panel{border:1px solid var(--line);border-radius:18px;padding:18px;background:var(--panel);box-shadow:var(--shadow);backdrop-filter:blur(18px)}
-    .left{position:sticky;top:18px;align-self:start}.mode{padding:17px;border:1px solid var(--line);border-radius:15px;margin-bottom:14px;background:var(--panel2)}
-    .section-title{display:flex;align-items:center;gap:10px;margin-bottom:6px}.section-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:rgba(58,207,220,.12);color:var(--cyan)}
-    .mode h3{margin:0;font-size:15px}.mode p{margin:0 0 14px}.status{color:var(--muted);font-size:12px;font-weight:650;line-height:1.5}
-    .upload{display:block;border:1px dashed rgba(96,217,228,.42);border-radius:13px;padding:14px;background:rgba(5,23,32,.52);cursor:pointer;transition:.2s}
-    .upload:hover{border-color:var(--cyan);background:rgba(39,173,189,.08)}.upload input{margin-top:10px;padding:8px;font-size:12px}
-    .privacy{color:var(--green);font-size:11px;font-weight:750}.import-meta{color:var(--amber);font-size:11px;font-weight:700;line-height:1.5}
-    .actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.btn{min-height:43px;padding:10px 13px;border:1px solid var(--line);border-radius:11px;background:rgba(15,48,62,.78);color:#d9f3f6;font-weight:800;cursor:pointer;transition:transform .18s,border-color .18s,background .18s;position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;gap:8px}
-    .actions .wide{grid-column:1/-1}
-    .main-file-label{display:flex;align-items:center;justify-content:center;text-align:center}
-    .direct-file-note{grid-column:1/-1;margin:0;padding:10px 12px;border-radius:10px;background:rgba(68,211,154,.08);border:1px solid rgba(68,211,154,.2);color:#8ddfbd;font-size:11px;line-height:1.5}
-    .fallback-only{display:none}.no-direct-file .direct-only{display:none}.no-direct-file .fallback-only{display:flex}
-    .btn:hover:not(:disabled){transform:translateY(-1px);border-color:rgba(84,214,226,.45);background:rgba(21,66,82,.9)}.btn:disabled{opacity:.42;cursor:not-allowed}
-    .btn.is-tapped{animation:buttonTap .42s ease}.btn .loading-icon{display:none}.btn.is-loading .idle-icon{display:none}.btn.is-loading .loading-icon{display:block;animation:iconSpin .8s linear infinite}
-    .primary{background:linear-gradient(135deg,var(--cyan2),#177e94);border-color:rgba(101,231,240,.46);color:#f4feff;box-shadow:0 8px 25px rgba(23,164,184,.18)}
-    .success{background:rgba(37,137,105,.6);border-color:rgba(80,218,165,.35)}.danger{background:rgba(145,45,59,.56);border-color:rgba(255,104,122,.3)}
-    #status{margin:14px 2px 0;padding:11px 12px;border-radius:10px;background:rgba(4,20,28,.56);border:1px solid rgba(136,220,230,.09)}
-    .preview-head{display:flex;justify-content:space-between;align-items:end;gap:18px;margin:1px 2px 14px}.preview-head h2{font-size:20px;margin:0 0 5px}
-    .preview-head p{margin:0}.edit-hint{text-align:right}.table{overflow:auto;max-height:760px;border:1px solid var(--line);border-radius:13px;background:#071923}
-    .table.just-updated{animation:tableReady .75s ease}.status.status-flash{animation:statusFlash .8s ease}
-    .preview-tools{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap}.type-filters{display:flex;gap:7px;flex-wrap:wrap}
-    .type-btn{min-height:36px;padding:7px 13px;border:1px solid rgba(84,214,226,.25);border-radius:10px;background:rgba(10,38,50,.85);color:#9fc4cc;font-size:11px;font-weight:850;letter-spacing:.04em;cursor:pointer;transition:.18s}
-    .type-btn:hover{border-color:rgba(84,214,226,.55);color:#e8fcff}.type-btn.active{background:linear-gradient(135deg,var(--cyan2),#177e94);border-color:var(--cyan);color:#fff;box-shadow:0 7px 20px rgba(25,176,196,.22)}
-    table{width:100%;min-width:1260px;border-collapse:separate;border-spacing:0;font-size:12px}th,td{padding:11px 12px;border-right:1px solid rgba(131,218,227,.09);border-bottom:1px solid rgba(131,218,227,.09);text-align:left;vertical-align:top}
-    th{position:sticky;top:0;z-index:2;background:#0d3443;color:#bdebf0;font-size:10px;letter-spacing:.055em;white-space:nowrap;text-transform:uppercase}
-    td{color:#d3e7eb;background:rgba(7,27,37,.9);min-width:90px}tbody tr:hover td{background:rgba(12,45,57,.92)}td[contenteditable=true]:focus{background:rgba(20,77,90,.85)}
-    .empty{height:220px;text-align:center;vertical-align:middle!important;color:var(--muted);font-weight:750}
-    .app .panel:last-child{min-width:0}
-    svg.lucide{width:20px;height:20px;stroke-width:1.8}.brand-mark svg{width:23px;height:23px}.icon-wrap svg{width:28px;height:28px}.section-icon svg{width:17px;height:17px}
-    @keyframes loginReveal{from{opacity:0;transform:perspective(1200px) rotateX(7deg) translateY(26px) scale(.97)}to{opacity:1;transform:perspective(1200px) rotateX(0) translateY(0) scale(1)}}
-    @keyframes shieldFloat{0%,100%{transform:translate3d(0,0,0) rotateY(0)}50%{transform:translate3d(0,-8px,18px) rotateY(12deg);box-shadow:inset 0 0 25px rgba(61,211,225,.16),0 12px 32px rgba(61,211,225,.2)}}
-    @keyframes fingerprintFloat{0%,100%{transform:translate3d(0,0,18px) rotateY(-5deg)}50%{transform:translate3d(0,-7px,32px) rotateY(7deg)}}
-    @keyframes buttonTap{0%{transform:scale(1)}35%{transform:scale(.96)}70%{transform:scale(1.025)}100%{transform:scale(1)}}
-    @keyframes iconSpin{to{transform:rotate(360deg)}}
-    @keyframes tableReady{0%{box-shadow:0 0 0 rgba(67,216,230,0)}45%{box-shadow:0 0 0 3px rgba(67,216,230,.28),0 0 34px rgba(67,216,230,.18)}100%{box-shadow:0 0 0 rgba(67,216,230,0)}}
-    @keyframes statusFlash{0%,100%{color:var(--muted)}45%{color:#b9fbff;background:rgba(39,185,203,.14)}}
-    @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}.login-shell{transition:none}}
-    @media(max-width:980px){.login-shell{grid-template-columns:1fr;max-width:620px}.login-art{min-height:360px;padding:44px}.trust{margin-top:42px}.login-form-wrap{padding:44px}.work{grid-template-columns:1fr}.left{position:static}.head{align-items:flex-start;flex-direction:column}.head-side{width:100%;justify-content:space-between}.head p{max-width:none}}
-    @media(max-width:600px){.login{padding:12px}.login-shell{border-radius:22px}.login-art{padding:32px 25px;min-height:330px}.login-form-wrap{padding:36px 25px}.hero-copy h1{font-size:42px}.trust{gap:12px;flex-wrap:wrap}.app{width:calc(100% - 20px);padding-top:10px}.head,.panel{border-radius:15px}.actions{grid-template-columns:1fr}.preview-head{align-items:flex-start;flex-direction:column}.preview-tools{align-items:flex-start;justify-content:flex-start}.edit-hint{text-align:left}.type-btn{flex:1}textarea{min-height:235px}}
+    .hero-copy h1{font-size:clamp(40px,5vw,67px);line-height:.98;letter-spacing:-.045em;margin:16px 0 24px}.hero-copy h1 span{display:block;color:#9aeaf0}.hero-copy p{font-size:16px;line-height:1.75;color:#9bb7c1;max-width:46ch;margin:0}
+    .trust{display:flex;gap:22px;position:relative;z-index:1;color:#89aab5;font-size:12px;font-weight:700}.trust span{display:flex;align-items:center;gap:7px}.dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green)}
+    .login-form-wrap{display:flex;align-items:center;padding:64px;background:linear-gradient(180deg,rgba(10,34,46,.74),rgba(5,21,30,.88))}.login-panel{width:100%;max-width:390px;margin:auto;transform:translateZ(28px)}.icon-wrap{width:56px;height:56px;border-radius:17px;margin-bottom:26px;animation:fingerprintFloat 3s ease-in-out infinite}
+    .login-panel h2{margin:0;font-size:32px;letter-spacing:-.025em}.login-panel>p{color:var(--muted);line-height:1.6;margin:10px 0 30px}label{display:grid;gap:8px;margin-bottom:16px;color:#bad0d8;font-size:13px;font-weight:750}
+    input,textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:rgba(4,19,28,.64);color:var(--ink);transition:.2s}input:hover,textarea:hover{border-color:rgba(91,214,225,.36)}textarea{min-height:270px;resize:vertical;font-family:"SFMono-Regular",Consolas,monospace;line-height:1.55}.login-panel input{min-height:50px}.login-panel .btn{width:100%;margin-top:7px}.secure-note{display:flex;gap:8px;align-items:center;justify-content:center;color:#6f919d;font-size:11px;margin-top:18px}.err{color:var(--red)!important;font-weight:800;min-height:20px;margin:14px 0 0!important}
+    .app{width:min(1450px,calc(100% - 36px));margin:auto;padding:24px 0 40px}.head{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:20px 22px;margin-bottom:18px;border:1px solid var(--line);border-radius:18px;background:rgba(7,27,38,.72);box-shadow:var(--shadow);backdrop-filter:blur(18px)}.head-side{display:flex;align-items:center;justify-content:flex-end;gap:14px}.head-side .btn{min-width:96px;flex:0 0 auto}.title-row{display:flex;align-items:center;gap:15px}.title-row .brand-mark{flex:0 0 auto}.ey{color:var(--cyan);font-size:11px;font-weight:850;letter-spacing:.16em;text-transform:uppercase}.head h1{font-size:clamp(24px,3vw,34px);line-height:1.15;letter-spacing:-.03em;margin:3px 0 0}.head p{max-width:520px;margin:0;color:var(--muted);font-size:13px;line-height:1.55}
+    .work{display:grid;grid-template-columns:minmax(330px,430px) 1fr;gap:18px}.panel{border:1px solid var(--line);border-radius:18px;padding:18px;background:var(--panel);box-shadow:var(--shadow);backdrop-filter:blur(18px)}.left{position:sticky;top:18px;align-self:start}.mode{padding:17px;border:1px solid var(--line);border-radius:15px;margin-bottom:14px;background:var(--panel2)}.section-title{display:flex;align-items:center;gap:10px;margin-bottom:6px}.section-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:rgba(58,207,220,.12);color:var(--cyan)}.mode h3{margin:0;font-size:15px}.mode p{margin:0 0 14px}.status{color:var(--muted);font-size:12px;font-weight:650;line-height:1.5}.upload{display:block;border:1px dashed rgba(96,217,228,.42);border-radius:13px;padding:14px;background:rgba(5,23,32,.52);cursor:pointer;transition:.2s}.upload:hover{border-color:var(--cyan);background:rgba(39,173,189,.08)}.upload input{margin-top:10px;padding:8px;font-size:12px}.privacy{color:var(--green);font-size:11px;font-weight:750}.import-meta{color:var(--amber);font-size:11px;font-weight:700;line-height:1.5}
+    .actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.btn{min-height:43px;padding:10px 13px;border:1px solid var(--line);border-radius:11px;background:rgba(15,48,62,.78);color:#d9f3f6;font-weight:800;cursor:pointer;transition:transform .18s,border-color .18s,background .18s;position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;gap:8px}.actions .wide{grid-column:1/-1}.main-file-label{display:flex;align-items:center;justify-content:center;text-align:center}.direct-file-note{grid-column:1/-1;margin:0;padding:10px 12px;border-radius:10px;background:rgba(68,211,154,.08);border:1px solid rgba(68,211,154,.2);color:#8ddfbd;font-size:11px;line-height:1.5}.fallback-only{display:none}.no-direct-file .direct-only{display:none}.no-direct-file .fallback-only{display:flex}.btn:hover:not(:disabled){transform:translateY(-1px);border-color:rgba(84,214,226,.45);background:rgba(21,66,82,.9)}.btn:disabled{opacity:.42;cursor:not-allowed}.btn.is-tapped{animation:buttonTap .42s ease}.btn .loading-icon{display:none}.btn.is-loading .idle-icon{display:none}.btn.is-loading .loading-icon{display:block;animation:iconSpin .8s linear infinite}.primary{background:linear-gradient(135deg,var(--cyan2),#177e94);border-color:rgba(101,231,240,.46);color:#f4feff;box-shadow:0 8px 25px rgba(23,164,184,.18)}.success{background:rgba(37,137,105,.6);border-color:rgba(80,218,165,.35)}.danger{background:rgba(145,45,59,.56);border-color:rgba(255,104,122,.3)}
+    #status{margin:14px 2px 0;padding:11px 12px;border-radius:10px;background:rgba(4,20,28,.56);border:1px solid rgba(136,220,230,.09)}.preview-head{display:flex;justify-content:space-between;align-items:end;gap:18px;margin:1px 2px 14px}.preview-head h2{font-size:20px;margin:0 0 5px}.preview-head p{margin:0}.edit-hint{text-align:right}.table{overflow:auto;max-height:760px;border:1px solid var(--line);border-radius:13px;background:#071923}.table.just-updated{animation:tableReady .75s ease}.status.status-flash{animation:statusFlash .8s ease}.preview-tools{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap}.type-filters{display:flex;gap:7px;flex-wrap:wrap}.type-btn{min-height:36px;padding:7px 13px;border:1px solid rgba(84,214,226,.25);border-radius:10px;background:rgba(10,38,50,.85);color:#9fc4cc;font-size:11px;font-weight:850;letter-spacing:.04em;cursor:pointer;transition:.18s}.type-btn:hover{border-color:rgba(84,214,226,.55);color:#e8fcff}.type-btn.active{background:linear-gradient(135deg,var(--cyan2),#177e94);border-color:var(--cyan);color:#fff;box-shadow:0 7px 20px rgba(25,176,196,.22)}
+    table{width:100%;min-width:1260px;border-collapse:separate;border-spacing:0;font-size:12px}th,td{padding:11px 12px;border-right:1px solid rgba(131,218,227,.09);border-bottom:1px solid rgba(131,218,227,.09);text-align:left;vertical-align:top}th{position:sticky;top:0;z-index:2;background:#0d3443;color:#bdebf0;font-size:10px;letter-spacing:.055em;white-space:nowrap;text-transform:uppercase}td{color:#d3e7eb;background:rgba(7,27,37,.9);min-width:90px}tbody tr:hover td{background:rgba(12,45,57,.92)}td[contenteditable=true]:focus{background:rgba(20,77,90,.85)}.empty{height:220px;text-align:center;vertical-align:middle!important;color:var(--muted);font-weight:750}.app .panel:last-child{min-width:0}svg.lucide{width:20px;height:20px;stroke-width:1.8}.brand-mark svg{width:23px;height:23px}.icon-wrap svg{width:28px;height:28px}.section-icon svg{width:17px;height:17px}
+    @keyframes loginReveal{from{opacity:0;transform:perspective(1200px) rotateX(7deg) translateY(26px) scale(.97)}to{opacity:1;transform:perspective(1200px) rotateX(0) translateY(0) scale(1)}}@keyframes shieldFloat{0%,100%{transform:translate3d(0,0,0) rotateY(0)}50%{transform:translate3d(0,-8px,18px) rotateY(12deg);box-shadow:inset 0 0 25px rgba(61,211,225,.16),0 12px 32px rgba(61,211,225,.2)}}@keyframes fingerprintFloat{0%,100%{transform:translate3d(0,0,18px) rotateY(-5deg)}50%{transform:translate3d(0,-7px,32px) rotateY(7deg)}}@keyframes buttonTap{0%{transform:scale(1)}35%{transform:scale(.96)}70%{transform:scale(1.025)}100%{transform:scale(1)}}@keyframes iconSpin{to{transform:rotate(360deg)}}@keyframes tableReady{0%{box-shadow:0 0 0 rgba(67,216,230,0)}45%{box-shadow:0 0 0 3px rgba(67,216,230,.28),0 0 34px rgba(67,216,230,.18)}100%{box-shadow:0 0 0 rgba(67,216,230,0)}}@keyframes statusFlash{0%,100%{color:var(--muted)}45%{color:#b9fbff;background:rgba(39,185,203,.14)}}
+    @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}.login-shell{transition:none}}@media(max-width:980px){.login-shell{grid-template-columns:1fr;max-width:620px}.login-art{min-height:360px;padding:44px}.trust{margin-top:42px}.login-form-wrap{padding:44px}.work{grid-template-columns:1fr}.left{position:static}.head{align-items:flex-start;flex-direction:column}.head-side{width:100%;justify-content:space-between}.head p{max-width:none}}@media(max-width:600px){.login{padding:12px}.login-shell{border-radius:22px}.login-art{padding:32px 25px;min-height:330px}.login-form-wrap{padding:36px 25px}.hero-copy h1{font-size:42px}.trust{gap:12px;flex-wrap:wrap}.app{width:calc(100% - 20px);padding-top:10px}.head,.panel{border-radius:15px}.actions{grid-template-columns:1fr}.preview-head{align-items:flex-start;flex-direction:column}.preview-tools{align-items:flex-start;justify-content:flex-start}.edit-hint{text-align:left}.type-btn{flex:1}textarea{min-height:235px}}
   </style>
 </head>
 <body class="lock">
@@ -108,97 +52,26 @@
     <div class="login-shell">
       <section class="login-art">
         <div class="brand"><span class="brand-mark"><i data-lucide="shield-check"></i></span><strong>SAFETY DATA HUB</strong></div>
-        <div class="hero-copy">
-          <div class="kicker">UA / UC / Near Miss</div>
-          <h1>Safer work.<span>Smarter records.</span></h1>
-          <p>Convert field safety observations into structured, department-ready Excel records—securely, accurately, and in seconds.</p>
-        </div>
+        <div class="hero-copy"><div class="kicker">UA / UC / Near Miss</div><h1>Safer work.<span>Smarter records.</span></h1><p>Convert field safety observations into structured, department-ready Excel records—securely, accurately, and in seconds.</p></div>
         <div class="trust"><span><b class="dot"></b>Browser processed</span><span><i data-lucide="lock-keyhole"></i>Private by design</span></div>
       </section>
       <section class="login-form-wrap">
-        <form class="login-panel" id="loginForm">
-          <span class="icon-wrap"><i data-lucide="fingerprint"></i></span>
-          <h2>Secure Login</h2>
-          <p>Enter user ID and 5 digit PIN.</p>
-          <label>User ID<input id="loginUser" value="Mr__Dk" autocomplete="username"></label>
-          <label>PIN<input id="loginPin" type="password" inputmode="numeric" maxlength="5" placeholder="•••••" autocomplete="current-password"></label>
-          <button class="btn primary" type="submit">Login securely</button>
-          <p class="err" id="loginError" role="alert"></p>
-          <div class="secure-note"><i data-lucide="shield"></i>Your session stays on this device</div>
-        </form>
+        <form class="login-panel" id="loginForm"><span class="icon-wrap"><i data-lucide="fingerprint"></i></span><h2>Secure Login</h2><p>Enter user ID and 5 digit PIN.</p><label>User ID<input id="loginUser" value="Mr__Dk" autocomplete="username"></label><label>PIN<input id="loginPin" type="password" inputmode="numeric" maxlength="5" placeholder="•••••" autocomplete="current-password"></label><button class="btn primary" type="submit">Login securely</button><p class="err" id="loginError" role="alert"></p><div class="secure-note"><i data-lucide="shield"></i>Your session stays on this device</div></form>
       </section>
     </div>
   </section>
-
   <main class="app">
-    <header class="head">
-      <div class="title-row">
-        <span class="brand-mark"><i data-lucide="shield-check"></i></span>
-        <div><div class="ey">UA / UC / Near Miss</div><h1>Safety Data to Excel Converter</h1></div>
-      </div>
-      <div class="head-side">
-        <p>Convert WhatsApp messages or department Excel files, check the preview, save records, and download a clean workbook.</p>
-        <button class="btn" id="logoutBtn" type="button">Log out</button>
-      </div>
-    </header>
+    <header class="head"><div class="title-row"><span class="brand-mark"><i data-lucide="shield-check"></i></span><div><div class="ey">UA / UC / Near Miss</div><h1>Safety Data to Excel Converter</h1></div></div><div class="head-side"><p>Convert WhatsApp messages or department Excel files, check the preview, save records, and download a clean workbook.</p><button class="btn" id="logoutBtn" type="button">Log out</button></div></header>
     <section class="work">
       <section class="panel left">
-        <div class="mode">
-          <div class="section-title"><span class="section-icon"><i data-lucide="message-square-text"></i></span><h3>Option 1 — WhatsApp Messages</h3></div>
-          <p class="status">Copy all safety messages from the WhatsApp group and paste them together. Every Name starts a new record.</p>
-          <label>Default Date<input id="defaultDate" type="date"></label>
-          <label>Paste Message<textarea id="messageInput" spellcheck="false" placeholder="Paste safety observation messages here…"></textarea></label>
-          <button class="btn primary" id="convertBtn" type="button">
-            <i class="idle-icon" data-lucide="wand-sparkles"></i>
-            <i class="loading-icon" data-lucide="loader-circle"></i>
-            <span>Convert All Messages</span>
-          </button>
-        </div>
-
-        <div class="mode">
-          <div class="section-title"><span class="section-icon"><i data-lucide="file-spreadsheet"></i></span><h3>Option 2 — Import Department Excel</h3></div>
-          <p class="status">Select an Excel/CSV file and convert its rows into the same preview.</p>
-          <label class="upload">Choose Excel File
-            <input id="excelFile" type="file" accept=".xlsx,.xls,.csv">
-          </label>
-          <button class="btn primary" id="importBtn" type="button">Convert Excel Preview</button>
-          <p class="privacy">File is processed only inside this browser.</p>
-          <p class="import-meta" id="importMeta"></p>
-        </div>
-
-        <div class="actions">
-          <button class="btn wide direct-only" id="connectMainBtn" type="button">Connect Main Excel — One Time</button>
-          <button class="btn primary wide direct-only" id="saveDirectBtn" type="button">Save Directly to Main Excel</button>
-          <p class="direct-file-note direct-only" id="mainFileState">Main Excel is not connected yet.</p>
-          <label class="btn primary wide main-file-label fallback-only">Choose Main Excel &amp; Create Updated Copy
-            <input id="mainExcelFallback" type="file" accept=".xlsx,.xls" hidden>
-          </label>
-          <button class="btn success" id="saveBtn" type="button">Save in Browser</button>
-          <button class="btn" id="showBtn" type="button">Show Saved</button>
-          <button class="btn success" id="downloadBtn" type="button" disabled>Download Excel</button>
-          <button class="btn danger" id="deleteBtn" type="button">Delete Saved</button>
-          <button class="btn" id="clearBtn" type="button">Clear</button>
-        </div>
+        <div class="mode"><div class="section-title"><span class="section-icon"><i data-lucide="message-square-text"></i></span><h3>Option 1 — WhatsApp Messages</h3></div><p class="status">Copy all safety messages from the WhatsApp group and paste them together. Every Name starts a new record.</p><label>Default Date<input id="defaultDate" type="date"></label><label>Paste Message<textarea id="messageInput" spellcheck="false" placeholder="Paste safety observation messages here…"></textarea></label><button class="btn primary" id="convertBtn" type="button"><i class="idle-icon" data-lucide="wand-sparkles"></i><i class="loading-icon" data-lucide="loader-circle"></i><span>Convert All Messages</span></button></div>
+        <div class="mode"><div class="section-title"><span class="section-icon"><i data-lucide="file-spreadsheet"></i></span><h3>Option 2 — Import Department Excel</h3></div><p class="status">Select an Excel/CSV file and convert its rows into the same preview.</p><label class="upload">Choose Excel File<input id="excelFile" type="file" accept=".xlsx,.xls,.csv"></label><button class="btn primary" id="importBtn" type="button">Convert Excel Preview</button><p class="privacy">File is processed only inside this browser.</p><p class="import-meta" id="importMeta"></p></div>
+        <div class="actions"><button class="btn wide direct-only" id="connectMainBtn" type="button">Connect Main Excel — One Time</button><button class="btn primary wide direct-only" id="saveDirectBtn" type="button">Save Directly to Main Excel</button><p class="direct-file-note direct-only" id="mainFileState">Main Excel is not connected yet.</p><label class="btn primary wide main-file-label fallback-only">Choose Main Excel &amp; Create Updated Copy<input id="mainExcelFallback" type="file" accept=".xlsx,.xls" hidden></label><button class="btn success" id="saveBtn" type="button">Save in Browser</button><button class="btn" id="showBtn" type="button">Show Saved</button><button class="btn success" id="downloadBtn" type="button" disabled>Download Excel</button><button class="btn danger" id="deleteBtn" type="button">Delete Saved</button><button class="btn" id="clearBtn" type="button">Clear</button></div>
         <p class="status" id="status">Ready for WhatsApp text or Excel file.</p>
       </section>
-
-      <section class="panel">
-        <div class="preview-head">
-          <div><h2>Excel Preview</h2><p class="status" id="rowCount">No records yet.</p></div>
-          <div class="preview-tools">
-            <div class="type-filters" aria-label="Filter preview by type">
-              <button class="type-btn" data-type-filter="UA" type="button">UA</button>
-              <button class="type-btn" data-type-filter="UC" type="button">UC</button>
-              <button class="type-btn" data-type-filter="NEAR MISS" type="button">NEAR MISS</button>
-            </div>
-            <p class="status edit-hint">Select Type to preview and download.</p>
-          </div>
-        </div>
-        <div class="table"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
-      </section>
+      <section class="panel"><div class="preview-head"><div><h2>Excel Preview</h2><p class="status" id="rowCount">No records yet.</p></div><div class="preview-tools"><div class="type-filters" aria-label="Filter preview by type"><button class="type-btn" data-type-filter="UA" type="button">UA</button><button class="type-btn" data-type-filter="UC" type="button">UC</button><button class="type-btn" data-type-filter="NEAR MISS" type="button">NEAR MISS</button></div><p class="status edit-hint">Select Type to preview and download.</p></div></div><div class="table"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div></section>
     </section>
   </main>
-
   <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="./app.js?v=motion-feedback-7"></script>
