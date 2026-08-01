@@ -5,36 +5,123 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>DK Private Admin Dashboard</title>
   <link rel="stylesheet" href="admin.css">
+  <style>
+    .project-hub{margin:18px 0;padding:18px;border:1px solid #29415f;border-radius:18px;background:#0d1b2f}
+    .project-hub-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+    .project-hub-head h2{margin:0 0 5px}.project-hub-head p{margin:0;color:#a9bed4}
+    .project-tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:14px}
+    .project-tool{padding:14px;text-align:left;border:1px solid #29415f;border-radius:14px;background:#102338;color:#eef6ff;cursor:pointer}
+    .project-tool strong,.project-tool small{display:block}.project-tool small{margin-top:5px;color:#9db2c8}
+    .project-tool.active{border-color:#39bdf8;box-shadow:0 0 0 2px rgba(57,189,248,.15);background:#12304c}
+    .tool-frame-wrap{border:1px solid #29415f;border-radius:16px;overflow:hidden;background:#081421}
+    .tool-frame-bar{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 12px;background:#13283e;color:#eef6ff}
+    #toolFrame{display:block;width:100%;height:min(72vh,820px);border:0;background:white}
+    .notification-item.unread{border-color:#39bdf8}
+    @media(max-width:700px){#toolFrame{height:70vh}.project-tools{grid-template-columns:1fr}}
+  </style>
 </head>
 <body>
-  <header class="top"><div><h1>DK Private Admin Dashboard</h1><p>सभी users द्वारा submit किया गया data</p></div><div><span id="adminUser"></span> <button class="btn danger" id="logoutBtn" type="button">Logout</button></div></header>
+  <header class="top">
+    <div>
+      <h1>DK Private Admin Dashboard</h1>
+      <p>सभी project tools और उनका cloud data — केवल Administrator के लिए</p>
+    </div>
+    <div><span id="adminUser"></span> <button class="btn danger" id="logoutBtn" type="button">Logout</button></div>
+  </header>
+
   <section class="login" id="loginPanel">
     <h2>Administrator Login</h2>
-    <p>Email और password से login करें। OTP नहीं लगेगा।</p>
+    <p>Admin ID और private password से login करें। Dashboard केवल admin-role account को खुलेगा।</p>
     <form id="adminPasswordForm">
       <label class="field">Admin ID<input id="adminId" value="admin" readonly required autocomplete="username"></label>
       <label class="field">Password<input id="adminPassword" type="password" required minlength="6" autocomplete="current-password"></label>
-      <div class="buttons"><button class="btn" type="submit">Open Dashboard</button><button class="btn secondary" id="showSetupBtn" type="button">Setup Admin Password</button></div>
+      <div class="buttons">
+        <button class="btn" type="submit">Open Dashboard</button>
+        <button class="btn secondary" id="showSetupBtn" type="button">Setup Admin Password</button>
+      </div>
     </form>
+
     <form id="adminSetupForm" hidden>
-      <p>पहली बार अपनी Admin Gmail डालें। Password बनाने का link आएगा—OTP नहीं।</p>
+      <p>पहली बार अपनी Admin Gmail डालें। Password बनाने का link email पर आएगा।</p>
       <label class="field">Admin Gmail<input id="setupAdminEmail" type="email" required autocomplete="email"></label>
-      <div class="buttons"><button class="btn" type="submit">Send Password Link</button><button class="btn secondary" id="cancelSetupBtn" type="button">Cancel</button></div>
+      <div class="buttons">
+        <button class="btn" type="submit">Send Password Link</button>
+        <button class="btn secondary" id="cancelSetupBtn" type="button">Cancel</button>
+      </div>
     </form>
+
     <form id="newPasswordForm" hidden>
       <p>अब अपना नया Admin password बनाएं।</p>
       <label class="field">New Password<input id="newAdminPassword" type="password" required minlength="6" autocomplete="new-password"></label>
       <button class="btn" type="submit">Save Password</button>
     </form>
+
     <p class="message" id="loginMessage"></p>
   </section>
+
   <main class="dashboard" id="dashboard" hidden>
-    <section class="stats"><div class="stat"><span>Users / Devices</span><strong id="userCount">0</strong></div><div class="stat"><span>Applications</span><strong id="appCount">0</strong></div><div class="stat"><span>Total Records</span><strong id="recordCount">0</strong></div><div class="stat alert-stat"><span>New Records</span><strong id="unreadCount">0</strong></div></section>
-    <section class="notifications"><div class="notification-head"><h2>Latest Submissions <span class="notification-badge" id="notificationBadge">0</span></h2><div class="buttons"><button class="btn secondary" id="enableBrowserAlertsBtn" type="button">Enable Browser Alerts</button><button class="btn" id="markAllReadBtn" type="button">Mark All Read</button></div></div><div class="notification-list" id="notificationList"><p class="empty">Login to load records.</p></div></section>
-    <section class="tools"><input id="searchBox" type="search" placeholder="Search user, barcode, part, unit..."><select id="appFilter"><option value="">All Apps</option></select><select id="userFilter"><option value="">All Users</option></select><button class="btn" id="refreshBtn" type="button">Refresh</button><button class="btn secondary" id="exportCsvBtn" type="button">Export CSV</button><button class="btn secondary" id="exportJsonBtn" type="button">Backup JSON</button><span class="status" id="visibleCount"></span><span class="status" id="dashboardStatus"></span></section>
-    <section class="tablebox"><table><thead><tr><th>Sr</th><th>User</th><th>App</th><th>Device</th><th>Submitted</th><th>Record</th><th>Full Data</th><th>File</th></tr></thead><tbody id="recordsBody"><tr><td class="empty" colspan="8">Login to load records.</td></tr></tbody></table></section>
+    <section class="stats">
+      <div class="stat"><span>Owners / Users</span><strong id="userCount">0</strong></div>
+      <div class="stat"><span>Project Tools</span><strong id="appCount">0</strong></div>
+      <div class="stat"><span>Total Cloud Records</span><strong id="recordCount">0</strong></div>
+      <div class="stat alert-stat"><span>New Records</span><strong id="unreadCount">0</strong></div>
+    </section>
+
+    <section class="project-hub">
+      <div class="project-hub-head">
+        <div>
+          <h2>Project Tools</h2>
+          <p>हर tool अलग नाम से खुलेगा। Tool में save किया data automatic cloud sync होगा।</p>
+        </div>
+        <strong id="toolStatus">Cloud sync ready</strong>
+      </div>
+      <div class="project-tools" id="toolButtons"></div>
+      <div class="tool-frame-wrap">
+        <div class="tool-frame-bar"><strong id="activeToolName">Project Tool</strong><span>Admin Dashboard के अंदर</span></div>
+        <iframe id="toolFrame" title="DK Project Tool"></iframe>
+      </div>
+    </section>
+
+    <section class="notifications">
+      <div class="notification-head">
+        <h2>Latest Cloud Activity <span class="notification-badge" id="notificationBadge">0</span></h2>
+        <div class="buttons">
+          <button class="btn secondary" id="enableBrowserAlertsBtn" type="button">Enable Browser Alerts</button>
+          <button class="btn" id="markAllReadBtn" type="button">Mark All Read</button>
+        </div>
+      </div>
+      <div class="notification-list" id="notificationList"><p class="empty">Login to load records.</p></div>
+    </section>
+
+    <section class="tools">
+      <input id="searchBox" type="search" placeholder="Search barcode, part, unit, complaint, observation...">
+      <select id="appFilter"><option value="">All Tools</option></select>
+      <select id="userFilter"><option value="">All Owners / Users</option></select>
+      <button class="btn" id="refreshBtn" type="button">Sync & Refresh</button>
+      <button class="btn secondary" id="exportCsvBtn" type="button">Export CSV</button>
+      <button class="btn secondary" id="exportJsonBtn" type="button">Backup JSON</button>
+      <span class="status" id="visibleCount"></span>
+      <span class="status" id="dashboardStatus"></span>
+    </section>
+
+    <section class="tablebox">
+      <table>
+        <thead><tr><th>Sr</th><th>Tool Name</th><th>Data Section</th><th>Updated</th><th>Record</th><th>Full Data</th><th>File</th></tr></thead>
+        <tbody id="recordsBody"><tr><td class="empty" colspan="7">Login to load records.</td></tr></tbody>
+      </table>
+    </section>
   </main>
-  <section class="modal" id="jsonModal" hidden><div class="modal-card"><button class="btn danger" id="closeModalBtn" type="button">Close</button><h2>Complete Record Data</h2><pre id="jsonContent"></pre></div></section>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="supabase-config.js"></script><script src="admin-v2.js"></script>
+
+  <section class="modal" id="jsonModal" hidden>
+    <div class="modal-card">
+      <button class="btn danger" id="closeModalBtn" type="button">Close</button>
+      <h2>Complete Record Data</h2>
+      <pre id="jsonContent"></pre>
+    </div>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="admin-v2.js"></script>
 </body>
 </html>
