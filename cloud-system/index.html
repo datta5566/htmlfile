@@ -1,29 +1,28 @@
-<!doctype html>
-<html lang="hi">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>DK User Apps</title>
-  <script>
-    if (location.hash.includes("type=recovery") || new URLSearchParams(location.search).has("code")) {
-      location.replace(`admin.html${location.search}${location.hash}`);
-    }
-  </script>
+  <meta name="theme-color" content="#071421">
+  <title>DK Office User Tools</title>
   <style>
-    *{box-sizing:border-box}body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:#07111f;color:#eef6ff;min-height:100vh}header{padding:22px;background:#0d1b2f;border-bottom:1px solid #29415f}header h1{margin:0}header p{margin:7px 0 0;color:#a9bed4}.wrap{max-width:900px;margin:34px auto;padding:0 16px}.note{background:#16351f;border:1px solid #2f7d4d;padding:14px;border-radius:14px;margin-bottom:18px}.grid{display:grid;grid-template-columns:repeat(2,minmax(220px,1fr));gap:16px}.card{background:#0d1b2f;border:1px solid #29415f;border-radius:18px;padding:20px}.card h2{margin-top:0}.btn{display:inline-block;text-decoration:none;padding:12px 17px;border-radius:11px;background:#2563eb;color:#fff;font-weight:800}.secondary{background:#20354b}.small{color:#a9bed4;font-size:14px}@media(max-width:650px){.grid{grid-template-columns:1fr}}
+    :root{--bg:#071421;--panel:#0d2032;--line:#25425c;--text:#eef7ff;--muted:#9ab1c6;--blue:#28b8ef;--shadow:0 20px 55px rgba(0,0,0,.25)}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 80% 8%,rgba(40,184,239,.13),transparent 28rem),var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif}.top{padding:24px 18px;border-bottom:1px solid var(--line);background:rgba(7,20,33,.94)}.top-inner,.wrap{width:min(1100px,100%);margin:auto}.top h1{margin:0;font-size:28px}.top p{margin:8px 0 0;color:var(--muted);line-height:1.5}.wrap{padding:28px 18px 50px}.note{padding:14px 16px;border:1px solid #26604a;border-radius:14px;background:rgba(38,96,74,.16);color:#bfead2;margin-bottom:20px;line-height:1.5}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}.card{display:flex;flex-direction:column;min-height:190px;padding:20px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(145deg,#0d2032,#091a29);box-shadow:var(--shadow)}.icon{font-size:32px;margin-bottom:16px}.card h2{margin:0;font-size:18px}.card p{color:var(--muted);font-size:13px;line-height:1.55;flex:1}.btn{display:inline-flex;justify-content:center;text-decoration:none;padding:11px 14px;border:1px solid #44c8f4;border-radius:11px;background:linear-gradient(135deg,#168fb9,var(--blue));color:white;font-weight:850}.foot{margin-top:22px;color:var(--muted);font-size:12px;line-height:1.6}
   </style>
 </head>
 <body>
-<header><h1>DK User Apps</h1><p>Direct access — OTP या login नहीं</p></header>
-<main class="wrap">
-  <div class="note"><strong>Ready:</strong> User link खोलकर सीधे app में काम कर सकता है।</div>
-  <section class="grid">
-    <article class="card"><h2>Kaizen App</h2><p>Kaizen records बनाने और download करने के लिए।</p><a class="btn" href="../kaizen/">Open Kaizen</a></article>
-    <article class="card"><h2>UA/UC App</h2><p>UA/UC converter और saved records के लिए।</p><a class="btn secondary" href="../ua-uc/">Open UA/UC</a></article>
-    <article class="card"><h2>Rejection App</h2><p>Rejection management records के लिए।</p><a class="btn secondary" href="../Rejection_Management_System_V2_Ultra_Professional.html">Open Rejection</a></article>
-    <article class="card"><h2>File Store</h2><p>KN-wise file और barcode records के लिए।</p><a class="btn secondary" href="https://datta5566.github.io/cl-new-/">Open File Store</a></article>
-  </section>
-  <p class="small">Cloud submission approval के बाद records private Admin Dashboard में दिखाई देंगे।</p>
-</main>
+  <header class="top"><div class="top-inner"><h1>DK Office User Tools</h1><p>Each office tool has its own user link. Sign in with your work email once, then use any tool. Saved records automatically sync to the private Admin Dashboard.</p></div></header>
+  <main class="wrap">
+    <div class="note"><strong>Cloud workflow:</strong> Open a tool → work normally → click the tool's Save button → the saved data is automatically synced under that tool in the Admin Dashboard.</div>
+    <section class="grid">
+      <article class="card"><div class="icon">🛡️</div><h2>UA / UC / Near Miss</h2><p>Safety observations, Excel conversion, saved safety records and near-miss data.</p><a class="btn" href="user-tool.html?tool=ua_uc">Open Safety Tool</a></article>
+      <article class="card"><div class="icon">💡</div><h2>Kaizen Converter</h2><p>Create, convert, save and download Kaizen improvement records.</p><a class="btn" href="user-tool.html?tool=kaizen">Open Kaizen Tool</a></article>
+      <article class="card"><div class="icon">📊</div><h2>Rejection Management</h2><p>Record rejection, rework and quality-related production data.</p><a class="btn" href="user-tool.html?tool=rejection">Open Rejection Tool</a></article>
+      <article class="card"><div class="icon">📁</div><h2>File Store Pro</h2><p>KN-wise barcode, shift, file and production record management.</p><a class="btn" href="user-tool.html?tool=file_store">Open File Store</a></article>
+      <article class="card"><div class="icon">🔎</div><h2>Customer Complaint</h2><p>Customer complaint entry and barcode-based production traceability.</p><a class="btn" href="user-tool.html?tool=complaint_trace">Open Complaint Tool</a></article>
+      <article class="card"><div class="icon">📷</div><h2>DK PDI Scanner</h2><p>Scan PDI information and maintain report history.</p><a class="btn" href="user-tool.html?tool=pdi_scanner">Open PDI Scanner</a></article>
+    </section>
+    <p class="foot">User cloud records are private. A signed-in user can access only their own database records, while the authorized Administrator can review all users' submitted tool data.</p>
+  </main>
 </body>
 </html>
