@@ -11,52 +11,76 @@
 
   const TOOLS = Object.freeze({
     ua_uc: {
-      name: "Safety UA/UC & Near Miss",
-      url: "../index.html",
+      name: "UA / UC / Near Miss",
+      icon: "🛡️",
+      note: "Latest Safety Data Hub",
+      url: "../ua-uc/",
       keys: ["whatsapp-safety-saved-records-online-v1"]
     },
     kaizen: {
       name: "Kaizen Converter",
+      icon: "💡",
+      note: "Kaizen records & conversion",
       url: "../kaizen/",
       keys: ["kaizen_converter_records_v8_combined_v2", "dk_kaizen_online_records_v4"]
     },
     rejection: {
       name: "Rejection Management",
+      icon: "📊",
+      note: "Rejection, rework & quality records",
       url: "../Rejection_Management_System_V2_Ultra_Professional.html",
       keys: ["rejection_records_v2", "rejection_records"]
     },
     file_store: {
       name: "File Store Pro",
+      icon: "📁",
+      note: "KN-wise barcode & file records",
       url: "../../cl-new-/",
       keys: ["FILE_STORE_PRO_RECORDS_V2"]
     },
     complaint_trace: {
-      name: "Customer Complaint Traceability",
+      name: "Customer Complaint",
+      icon: "🔎",
+      note: "Complaint traceability records",
       url: "../../cl-new-/#complaintPanel",
       keys: ["FILE_STORE_PRO_COMPLAINTS_V1"]
     },
     pdi_scanner: {
       name: "DK PDI Scanner",
+      icon: "📷",
+      note: "PDI scan & report history",
       url: "../DK_PDI_Android/app/src/main/assets/index.html",
       keys: ["dk_pdi_android_reports_v1"]
     },
     video_studio: {
       name: "AI Short Video Studio",
+      icon: "🎬",
+      note: "Video prompt presets",
       url: "../AI_Short_Video_Studio/",
       keys: ["dk_video_preset", "dk_last_prompt"]
     }
   });
 
+  const SECTION_NAMES = Object.freeze({
+    "whatsapp-safety-saved-records-online-v1": "Safety Records",
+    "kaizen_converter_records_v8_combined_v2": "Kaizen Combined Records",
+    "dk_kaizen_online_records_v4": "Kaizen Online Records",
+    "rejection_records_v2": "Rejection Records V2",
+    "rejection_records": "Rejection Records",
+    "FILE_STORE_PRO_RECORDS_V2": "Production / Barcode Records",
+    "FILE_STORE_PRO_COMPLAINTS_V1": "Complaint Records",
+    "dk_pdi_android_reports_v1": "PDI Reports",
+    "dk_video_preset": "Video Preset",
+    "dk_last_prompt": "Last Video Prompt"
+  });
+
   let cloudDb = null;
   let currentUser = null;
+  let activeTool = null;
   let snapshots = [];
-  let rows = [];
-  let notifications = [];
-  let dataChannel = null;
-  let alertChannel = null;
+  let displayRows = [];
   let syncTimer = null;
   let syncBusy = false;
-  let activeTool = "ua_uc";
 
   function esc(value) {
     return String(value ?? "").replace(/[&<>"']/g, (char) => ({
@@ -68,8 +92,8 @@
     return Boolean(config.supabaseUrl && config.supabasePublishableKey && window.supabase);
   }
 
-  function toolName(code) {
-    return TOOLS[code]?.name || code || "Tool";
+  function sectionName(key) {
+    return SECTION_NAMES[key] || String(key || "Saved Data").replaceAll("_", " ");
   }
 
   function getDeviceId() {
@@ -89,34 +113,20 @@
 
   function safeJson(raw) {
     if (raw == null || raw === "") return [];
-    try {
-      return JSON.parse(raw);
-    } catch {
-      return { value: raw };
-    }
-  }
-
-  function listFromPayload(payload) {
-    if (Array.isArray(payload)) return payload;
-    if (payload && typeof payload === "object") return [payload];
-    if (payload !== null && payload !== undefined && payload !== "") return [{ value: payload }];
-    return [];
+    try { return JSON.parse(raw); } catch { return String(raw); }
   }
 
   function itemCount(payload) {
     if (Array.isArray(payload)) return payload.length;
     if (payload && typeof payload === "object") return 1;
-    return payload ? 1 : 0;
+    return String(payload ?? "").trim() ? 1 : 0;
   }
 
-  function recordSummary(record) {
-    if (!record || typeof record !== "object") return String(record ?? "");
-    const fields = [
-      record.complaintNo, record.employeeName, record["REPORTED BY "], record.ideaBy,
-      record.barcode, record["Part Barcode"], record.partName, record["OBSERVATION FOUND"],
-      record.rejection, record.unit, record.kn, record.shift, record.topic, record.value
-    ].filter(Boolean);
-    return fields.slice(0, 5).join(" | ") || "Saved record";
+  function recordList(payload) {
+    if (Array.isArray(payload)) return payload;
+    if (payload && typeof payload === "object") return [payload];
+    if (String(payload ?? "").trim()) return [{ value: payload }];
+    return [];
   }
 
   function recordForHash(record) {
@@ -131,32 +141,25 @@
   }
 
   function cleanFileName(value) {
-    return String(value || "uploaded-file")
-      .replace(/[^a-zA-Z0-9._-]+/g, "-")
-      .replace(/-+/g, "-")
-      .slice(0, 120);
+    return String(value || "uploaded-file").replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/-+/g, "-").slice(0, 120);
   }
 
   async function uploadDataUrl(dataUrl, record, appCode, deviceId) {
     const signature = await sha256(`${dataUrl.length}:${dataUrl.slice(0, 160)}`);
-    const cacheKey = `DK_ADMIN_FILE_${currentUser.id}_${signature}`;
-    const cachedPath = localStorage.getItem(cacheKey);
-    if (cachedPath) return cachedPath;
+    const cacheKey = `DK_CLOUD_FILE_${currentUser.id}_${signature}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) return cached;
 
     const response = await fetch(dataUrl);
     const blob = await response.blob();
     const recordId = cleanFileName(record.id || record.barcode || signature.slice(0, 16));
     const fileName = cleanFileName(record.fileName || `file-${signature.slice(0, 12)}`);
     const path = `${currentUser.id}/${appCode}/${deviceId}/${recordId}/${fileName}`;
-
-    const { error } = await cloudDb.storage
-      .from(config.storageBucket || "dk-app-files")
-      .upload(path, blob, {
-        upsert: true,
-        contentType: record.fileType || blob.type || "application/octet-stream"
-      });
+    const { error } = await cloudDb.storage.from(config.storageBucket || "dk-app-files").upload(path, blob, {
+      upsert: true,
+      contentType: record.fileType || blob.type || "application/octet-stream"
+    });
     if (error) throw error;
-
     localStorage.setItem(cacheKey, path);
     return path;
   }
@@ -186,36 +189,34 @@
     return prepareRecord(payload, appCode, deviceId);
   }
 
-  async function syncEvents(appCode, storageKey, originalPayload, cloudPayload, deviceId) {
+  async function syncRecordEvents(appCode, storageKey, originalPayload, cloudPayload, deviceId) {
     const baselineKey = `${BASELINE_PREFIX}${currentUser.id}_${appCode}_${storageKey}`;
-    const isBaseline = localStorage.getItem(baselineKey) !== "1";
-    const originals = listFromPayload(originalPayload);
-    const clouds = listFromPayload(cloudPayload);
-    const events = [];
+    const firstSync = localStorage.getItem(baselineKey) !== "1";
+    const originals = recordList(originalPayload);
+    const cloudRecords = recordList(cloudPayload);
+    const rows = [];
 
     for (let index = 0; index < originals.length; index += 1) {
-      const original = originals[index];
-      const recordHash = await sha256(JSON.stringify(recordForHash(original)));
-      events.push({
+      const recordHash = await sha256(JSON.stringify(recordForHash(originals[index])));
+      rows.push({
         user_id: currentUser.id,
         app_code: appCode,
         device_id: deviceId,
         storage_key: storageKey,
         record_hash: recordHash,
         record_index: index,
-        record_data: clouds[index] ?? original,
-        notify_admin: !isBaseline
+        record_data: cloudRecords[index] ?? originals[index],
+        notify_admin: !firstSync
       });
     }
 
-    if (events.length) {
-      const { error } = await cloudDb.from("app_events").upsert(events, {
+    if (rows.length) {
+      const { error } = await cloudDb.from("app_events").upsert(rows, {
         onConflict: "user_id,app_code,device_id,storage_key,record_hash",
         ignoreDuplicates: true
       });
       if (error) throw error;
     }
-
     localStorage.setItem(baselineKey, "1");
   }
 
@@ -225,9 +226,9 @@
     const fingerprint = await sha256(raw);
     const cacheKey = `${SYNC_PREFIX}${currentUser.id}_${appCode}_${storageKey}`;
     const baselineKey = `${BASELINE_PREFIX}${currentUser.id}_${appCode}_${storageKey}`;
-    const sameData = localStorage.getItem(cacheKey) === fingerprint;
+    const same = localStorage.getItem(cacheKey) === fingerprint;
     const needsBaseline = localStorage.getItem(baselineKey) !== "1";
-    if (!force && sameData && !needsBaseline) return { changed: false, count: itemCount(safeJson(raw)) };
+    if (!force && same && !needsBaseline) return false;
 
     const deviceId = getDeviceId();
     const originalPayload = safeJson(raw);
@@ -244,206 +245,132 @@
     }, { onConflict: "user_id,app_code,device_id,storage_key" });
     if (error) throw error;
 
-    await syncEvents(appCode, storageKey, originalPayload, cloudPayload, deviceId);
+    await syncRecordEvents(appCode, storageKey, originalPayload, cloudPayload, deviceId);
     localStorage.setItem(cacheKey, fingerprint);
-    return { changed: !sameData, count: itemCount(originalPayload) };
+    return true;
   }
 
-  async function syncAll(force = false) {
-    if (!currentUser || syncBusy) return;
+  async function syncSelectedTool(force = false) {
+    if (!currentUser || !activeTool || syncBusy) return;
     syncBusy = true;
-    $("#toolStatus").textContent = "Cloud sync chal raha hai...";
-    let total = 0;
-    let changed = 0;
-    const errors = [];
-
+    const tool = TOOLS[activeTool];
+    $("#dashboardStatus").textContent = "Saving to cloud...";
     try {
-      for (const [appCode, tool] of Object.entries(TOOLS)) {
-        for (const key of tool.keys) {
-          try {
-            const result = await syncOne(appCode, key, force);
-            total += result.count;
-            if (result.changed) changed += 1;
-          } catch (error) {
-            errors.push(`${tool.name}: ${error.message || "sync failed"}`);
-          }
-        }
-      }
-
-      if (errors.length) {
-        $("#toolStatus").textContent = `${errors.length} section sync error.`;
-        $("#dashboardStatus").textContent = errors.join(" | ");
-      } else {
-        $("#toolStatus").textContent = `Cloud safe: ${total} records · ${changed} updated`;
-      }
+      let changed = 0;
+      for (const key of tool.keys) if (await syncOne(activeTool, key, force)) changed += 1;
+      await fetchSelectedToolData();
+      $("#dashboardStatus").textContent = changed ? `Saved ${changed} section · ${new Date().toLocaleTimeString("en-IN")}` : `Cloud up to date · ${new Date().toLocaleTimeString("en-IN")}`;
+    } catch (error) {
+      $("#dashboardStatus").textContent = error.message || "Cloud sync failed";
     } finally {
       syncBusy = false;
     }
   }
 
+  function summary(record) {
+    if (!record || typeof record !== "object") return String(record ?? "");
+    const keys = ["NAME", "employeeName", "complaintNo", "customerName", "barcode", "Part Barcode", "partName", "Part Name", "OBSERVATION FOUND", "rejection", "unit", "kn", "shift", "value"];
+    const values = keys.map((key) => record[key]).filter((value) => value !== undefined && value !== null && String(value).trim()).slice(0, 5);
+    return values.length ? values.join(" | ") : Object.entries(record).slice(0, 4).map(([key, value]) => `${key}: ${String(value).slice(0, 80)}`).join(" | ");
+  }
+
   function flattenSnapshots() {
-    rows = [];
-    for (const snapshot of snapshots) {
-      const list = listFromPayload(snapshot.payload);
-      if (!list.length) continue;
-      list.forEach((record, index) => rows.push({
+    const output = [];
+    snapshots.forEach((snapshot) => {
+      const records = recordList(snapshot.payload);
+      records.forEach((record, index) => output.push({
         id: `${snapshot.id}:${index}`,
         snapshot_id: snapshot.id,
-        user_id: snapshot.user_id,
-        display_name: snapshot.profiles?.display_name || snapshot.profiles?.email || "Owner",
-        app_code: snapshot.app_code,
         storage_key: snapshot.storage_key,
-        device_id: snapshot.device_id,
-        updated_at: snapshot.updated_at,
+        updated_at: snapshot.client_updated_at || snapshot.updated_at || snapshot.created_at,
         record_data: record,
         record_index: index
       }));
-    }
+    });
+    return output;
+  }
+
+  async function fetchSelectedToolData() {
+    if (!activeTool) return;
+    const { data, error } = await cloudDb.from("app_snapshots").select("id,storage_key,payload,item_count,client_updated_at,created_at,updated_at").eq("app_code", activeTool).order("updated_at", { ascending: false });
+    if (error) throw error;
+    snapshots = data || [];
+    displayRows = flattenSnapshots();
+    renderSelectedData();
   }
 
   function filteredRows() {
     const term = $("#searchBox").value.trim().toLowerCase();
-    const app = $("#appFilter").value;
-    const user = $("#userFilter").value;
-    return rows.filter((row) =>
-      (!app || row.app_code === app) &&
-      (!user || row.user_id === user) &&
-      (!term || JSON.stringify(row).toLowerCase().includes(term))
-    );
+    if (!term) return displayRows;
+    return displayRows.filter((row) => JSON.stringify(row.record_data).toLowerCase().includes(term) || sectionName(row.storage_key).toLowerCase().includes(term));
   }
 
-  function renderToolButtons() {
-    const host = $("#toolButtons");
-    host.innerHTML = "";
-    for (const [code, tool] of Object.entries(TOOLS)) {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "project-tool";
-      button.dataset.toolCode = code;
-      button.innerHTML = `<strong>${esc(tool.name)}</strong><small>${esc(tool.keys.length)} data section${tool.keys.length > 1 ? "s" : ""}</small>`;
-      button.onclick = () => openTool(code);
-      host.appendChild(button);
-    }
-  }
+  function renderSelectedData() {
+    const rows = filteredRows();
+    $("#sectionCount").textContent = new Set(snapshots.map((row) => row.storage_key)).size;
+    $("#recordCount").textContent = displayRows.length;
+    $("#dataTitle").textContent = `${TOOLS[activeTool].name} — Saved Cloud Data`;
+    $("#recordsBody").innerHTML = rows.length ? rows.map((row, index) => {
+      const hasFile = Boolean(row.record_data?.cloudFilePath);
+      return `<tr><td>${index + 1}</td><td>${esc(sectionName(row.storage_key))}</td><td>${esc(new Date(row.updated_at).toLocaleString("en-IN"))}</td><td class="record-summary" title="${esc(summary(row.record_data))}">${esc(summary(row.record_data))}</td><td><button class="btn soft view-json" data-id="${esc(row.id)}" type="button">View</button></td><td>${hasFile ? `<button class="btn soft download-file" data-id="${esc(row.id)}" type="button">Open File</button>` : "-"}</td></tr>`;
+    }).join("") : '<tr><td class="empty" colspan="6">इस tool का cloud data अभी नहीं है। Tool में record Save करें और Save / Sync Now दबाएँ।</td></tr>';
 
-  function openTool(code) {
-    activeTool = code;
-    const tool = TOOLS[code];
-    $("#activeToolName").textContent = tool.name;
-    $("#toolFrame").src = tool.url;
-    document.querySelectorAll(".project-tool").forEach((button) => {
-      button.classList.toggle("active", button.dataset.toolCode === code);
-    });
-    setTimeout(() => syncAll(false).catch(() => {}), 1200);
-  }
-
-  function renderFilters() {
-    const appValue = $("#appFilter").value;
-    const userValue = $("#userFilter").value;
-    $("#appFilter").innerHTML = '<option value="">All Tools</option>' +
-      Object.entries(TOOLS).map(([code, tool]) => `<option value="${esc(code)}">${esc(tool.name)}</option>`).join("");
-    const users = new Map(snapshots.map((row) => [row.user_id, row.profiles?.display_name || row.profiles?.email || "Owner"]));
-    $("#userFilter").innerHTML = '<option value="">All Owners / Users</option>' +
-      [...users].map(([id, name]) => `<option value="${esc(id)}">${esc(name)}</option>`).join("");
-    $("#appFilter").value = appValue;
-    $("#userFilter").value = userValue;
-  }
-
-  function renderStats() {
-    $("#userCount").textContent = new Set(snapshots.map((row) => row.user_id)).size;
-    $("#appCount").textContent = Object.keys(TOOLS).length;
-    $("#recordCount").textContent = rows.length;
-    const unread = notifications.filter((row) => !row.is_read).length;
-    $("#unreadCount").textContent = unread;
-    $("#notificationBadge").textContent = unread;
+    document.querySelectorAll(".view-json").forEach((button) => button.addEventListener("click", () => showJson(button.dataset.id)));
+    document.querySelectorAll(".download-file").forEach((button) => button.addEventListener("click", () => downloadCloudFile(button.dataset.id)));
   }
 
   function showJson(id) {
-    const row = rows.find((item) => item.id === id);
+    const row = displayRows.find((item) => item.id === id);
     if (!row) return;
     $("#jsonContent").textContent = JSON.stringify(row.record_data, null, 2);
     $("#jsonModal").hidden = false;
   }
 
   async function downloadCloudFile(id) {
-    const row = rows.find((item) => item.id === id);
+    const row = displayRows.find((item) => item.id === id);
     const path = row?.record_data?.cloudFilePath;
     if (!path) return;
-    const { data, error } = await cloudDb.storage
-      .from(config.storageBucket || "dk-app-files")
-      .createSignedUrl(path, 60);
-    if (error) {
-      $("#dashboardStatus").textContent = error.message;
-      return;
-    }
+    const { data, error } = await cloudDb.storage.from(config.storageBucket || "dk-app-files").createSignedUrl(path, 60);
+    if (error) { $("#dashboardStatus").textContent = error.message; return; }
     window.open(data.signedUrl, "_blank", "noopener");
   }
 
-  function renderTable() {
-    const visible = filteredRows();
-    $("#visibleCount").textContent = `${visible.length} records shown`;
-    $("#recordsBody").innerHTML = visible.length ? visible.map((row, index) => `
-      <tr>
-        <td>${index + 1}</td>
-        <td>${esc(toolName(row.app_code))}</td>
-        <td>${esc(row.storage_key)}</td>
-        <td>${esc(new Date(row.updated_at).toLocaleString("en-IN"))}</td>
-        <td>${esc(recordSummary(row.record_data))}</td>
-        <td><button class="btn secondary view-json" data-id="${esc(row.id)}">View</button></td>
-        <td>${row.record_data?.cloudFilePath ? `<button class="btn download-file" data-id="${esc(row.id)}">Download</button>` : "-"}</td>
-      </tr>`).join("") :
-      '<tr><td class="empty" colspan="7">Is filter me abhi saved data nahi hai.</td></tr>';
-
-    document.querySelectorAll(".view-json").forEach((button) => button.onclick = () => showJson(button.dataset.id));
-    document.querySelectorAll(".download-file").forEach((button) => button.onclick = () => downloadCloudFile(button.dataset.id));
+  function renderToolButtons() {
+    $("#toolButtons").innerHTML = Object.entries(TOOLS).map(([code, tool]) => `<button class="tool-card" type="button" data-tool="${esc(code)}"><div class="tool-icon">${tool.icon}</div><strong>${esc(tool.name)}</strong><small>${esc(tool.note)}</small></button>`).join("");
+    document.querySelectorAll(".tool-card").forEach((button) => button.addEventListener("click", () => openTool(button.dataset.tool)));
   }
 
-  function renderNotifications() {
-    $("#notificationList").innerHTML = notifications.length ? notifications.slice(0, 100).map((row) => `
-      <article class="notification-item ${row.is_read ? "" : "unread"}">
-        <div class="notification-title"><strong>${esc(toolName(row.app_code))}</strong><span class="badge">${row.is_read ? "Read" : "New"}</span></div>
-        <p>${esc(row.message || recordSummary(row.record_data))}</p>
-        <small>${esc(new Date(row.created_at).toLocaleString("en-IN"))}</small>
-      </article>`).join("") : '<p class="empty">No new tool submissions yet.</p>';
+  async function openTool(code) {
+    const tool = TOOLS[code];
+    if (!tool) return;
+    activeTool = code;
+    snapshots = [];
+    displayRows = [];
+    $("#searchBox").value = "";
+    $("#launcherView").hidden = true;
+    $("#toolView").hidden = false;
+    $("#activeToolIcon").textContent = tool.icon;
+    $("#activeToolName").textContent = tool.name;
+    $("#activeToolNote").textContent = `${tool.note} · केवल इसी tool का data नीचे दिखेगा`;
+    $("#toolFrame").src = tool.url;
+    $("#dashboardStatus").textContent = "Opening tool...";
+    await fetchSelectedToolData().catch((error) => $("#dashboardStatus").textContent = error.message);
+    startAutoSync();
   }
 
-  async function fetchSnapshots() {
-    const output = [];
-    let from = 0;
-    while (true) {
-      const { data, error } = await cloudDb
-        .from("app_snapshots")
-        .select("*,profiles(display_name,email)")
-        .order("updated_at", { ascending: false })
-        .range(from, from + 999);
-      if (error) throw error;
-      output.push(...data);
-      if (data.length < 1000) break;
-      from += 1000;
-    }
-    snapshots = output;
-    flattenSnapshots();
+  function showHome() {
+    activeTool = null;
+    clearInterval(syncTimer);
+    syncTimer = null;
+    $("#toolFrame").src = "about:blank";
+    $("#toolView").hidden = true;
+    $("#launcherView").hidden = false;
   }
 
-  async function fetchNotifications() {
-    const { data, error } = await cloudDb
-      .from("admin_notifications")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(200);
-    if (error) throw error;
-    notifications = data || [];
-  }
-
-  async function fetchAll(syncFirst = false) {
-    $("#dashboardStatus").textContent = "Loading...";
-    if (syncFirst) await syncAll(false);
-    await Promise.all([fetchSnapshots(), fetchNotifications()]);
-    renderFilters();
-    renderStats();
-    renderTable();
-    renderNotifications();
-    $("#dashboardStatus").textContent = `Updated: ${new Date().toLocaleString("en-IN")}`;
+  function startAutoSync() {
+    clearInterval(syncTimer);
+    const interval = Math.max(10000, Number(config.syncIntervalMs) || 15000);
+    syncTimer = setInterval(() => syncSelectedTool(false), interval);
   }
 
   function download(text, name, type) {
@@ -456,72 +383,38 @@
   }
 
   function exportCsv() {
-    const visible = filteredRows();
+    if (!activeTool) return;
+    const rows = filteredRows();
     const quote = (value) => `"${String(value ?? "").replaceAll('"', '""')}"`;
-    const lines = [["Tool", "Storage Section", "Updated", "Record JSON"].map(quote).join(",")];
-    visible.forEach((row) => lines.push([
-      toolName(row.app_code), row.storage_key, row.updated_at, JSON.stringify(row.record_data)
-    ].map(quote).join(",")));
-    download(lines.join("\n"), "dk-admin-tool-data.csv", "text/csv;charset=utf-8");
+    const lines = [["Data Section", "Updated", "Record JSON"].map(quote).join(",")];
+    rows.forEach((row) => lines.push([sectionName(row.storage_key), row.updated_at, JSON.stringify(row.record_data)].map(quote).join(",")));
+    download(lines.join("\n"), `${activeTool}-cloud-data.csv`, "text/csv;charset=utf-8");
+  }
+
+  function exportJson() {
+    if (!activeTool) return;
+    download(JSON.stringify({ tool: activeTool, exported_at: new Date().toISOString(), records: displayRows }, null, 2), `${activeTool}-cloud-backup.json`, "application/json");
   }
 
   async function verifyAdmin(session) {
     currentUser = session.user;
-    const { data, error } = await cloudDb
-      .from("profiles")
-      .select("email,display_name,role")
-      .eq("id", currentUser.id)
-      .single();
-
+    const { data, error } = await cloudDb.from("profiles").select("email,display_name,role").eq("id", currentUser.id).single();
     if (error || data?.role !== "admin") {
       $("#loginMessage").textContent = "यह account Administrator नहीं है।";
       await cloudDb.auth.signOut();
       return;
     }
-
-    $("#adminUser").textContent = data.email || currentUser.email;
+    $("#adminUser").textContent = data.email || currentUser.email || "Admin";
     $("#loginPanel").hidden = true;
     $("#dashboard").hidden = false;
+    $("#logoutBtn").hidden = false;
     renderToolButtons();
-    openTool(activeTool);
-    await syncAll(true);
-    await fetchAll(false);
-
-    clearInterval(syncTimer);
-    syncTimer = setInterval(() => {
-      syncAll(false).then(() => fetchAll(false)).catch((error) => {
-        $("#dashboardStatus").textContent = error.message || "Auto sync error";
-      });
-    }, Math.max(10000, Number(config.syncIntervalMs) || 15000));
-
-    if (dataChannel) await cloudDb.removeChannel(dataChannel);
-    if (alertChannel) await cloudDb.removeChannel(alertChannel);
-
-    dataChannel = cloudDb.channel("dk-admin-snapshots")
-      .on("postgres_changes", { event: "*", schema: "public", table: "app_snapshots" }, () => {
-        fetchAll(false).catch(() => {});
-      }).subscribe();
-
-    alertChannel = cloudDb.channel("dk-admin-alerts")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "admin_notifications" }, async (change) => {
-        if ("Notification" in window && Notification.permission === "granted") {
-          new Notification(`New ${toolName(change.new.app_code)} Record`, { body: change.new.message || "New record saved" });
-        }
-        await fetchAll(false);
-      }).subscribe();
+    showHome();
   }
 
   async function init() {
-    renderToolButtons();
-    if (!configured()) {
-      $("#loginMessage").textContent = "Cloud configuration pending.";
-      return;
-    }
-
-    cloudDb = window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-    });
-
+    if (!configured()) { $("#loginMessage").textContent = "Cloud configuration pending."; return; }
+    cloudDb = window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
     const { data } = await cloudDb.auth.getSession();
     if (data.session) await verifyAdmin(data.session);
 
@@ -534,48 +427,32 @@
         $("#loginMessage").textContent = "नया password बनाएं।";
         return;
       }
-      if (session && !currentUser) {
-        verifyAdmin(session).catch((error) => $("#loginMessage").textContent = error.message);
-      }
+      if (session && (!currentUser || currentUser.id !== session.user.id)) verifyAdmin(session).catch((error) => $("#loginMessage").textContent = error.message);
       if (!session) currentUser = null;
     });
   }
 
   $("#adminPasswordForm").addEventListener("submit", async (event) => {
     event.preventDefault();
-    const adminId = $("#adminId").value.trim().toLowerCase();
-    const password = $("#adminPassword").value;
-    if (adminId !== ADMIN_ID) {
-      $("#loginMessage").textContent = "Admin ID गलत है।";
-      return;
-    }
-
+    if ($("#adminId").value.trim().toLowerCase() !== ADMIN_ID) { $("#loginMessage").textContent = "Admin ID गलत है।"; return; }
     const adminEmail = localStorage.getItem(ADMIN_EMAIL_KEY);
-    if (!adminEmail) {
-      $("#loginMessage").textContent = "पहली बार Setup Admin Password दबाएं।";
-      return;
-    }
-
+    if (!adminEmail) { $("#loginMessage").textContent = "पहली बार Setup Admin Password दबाएँ।"; return; }
     $("#loginMessage").textContent = "Login हो रहा है...";
-    const { data, error } = await cloudDb.auth.signInWithPassword({ email: adminEmail, password });
-    if (error) {
-      $("#loginMessage").textContent = "Password गलत है या Admin account setup बाकी है।";
-      return;
-    }
+    const { data, error } = await cloudDb.auth.signInWithPassword({ email: adminEmail, password: $("#adminPassword").value });
+    if (error) { $("#loginMessage").textContent = "Password गलत है या Admin setup बाकी है।"; return; }
     if (data.session) await verifyAdmin(data.session);
   });
 
-  $("#showSetupBtn").onclick = () => {
+  $("#showSetupBtn").addEventListener("click", () => {
     $("#adminPasswordForm").hidden = true;
     $("#adminSetupForm").hidden = false;
     $("#setupAdminEmail").value = localStorage.getItem(ADMIN_EMAIL_KEY) || "";
-    $("#setupAdminEmail").focus();
-  };
+  });
 
-  $("#cancelSetupBtn").onclick = () => {
+  $("#cancelSetupBtn").addEventListener("click", () => {
     $("#adminSetupForm").hidden = true;
     $("#adminPasswordForm").hidden = false;
-  };
+  });
 
   $("#adminSetupForm").addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -589,62 +466,26 @@
 
   $("#newPasswordForm").addEventListener("submit", async (event) => {
     event.preventDefault();
-    const password = $("#newAdminPassword").value;
-    const { data, error } = await cloudDb.auth.updateUser({ password });
-    if (error) {
-      $("#loginMessage").textContent = error.message;
-      return;
-    }
+    const { data, error } = await cloudDb.auth.updateUser({ password: $("#newAdminPassword").value });
+    if (error) { $("#loginMessage").textContent = error.message; return; }
     if (data.user?.email) localStorage.setItem(ADMIN_EMAIL_KEY, data.user.email.toLowerCase());
-    $("#loginMessage").textContent = "Password save हो गया। अब admin ID से login करें।";
+    $("#loginMessage").textContent = "Password save हो गया। अब login करें।";
     await cloudDb.auth.signOut();
     location.reload();
   });
 
-  $("#refreshBtn").onclick = () => syncAll(true)
-    .then(() => fetchAll(false))
-    .catch((error) => $("#dashboardStatus").textContent = error.message);
-
-  $("#markAllReadBtn").onclick = async () => {
-    const { error } = await cloudDb.from("admin_notifications").update({ is_read: true }).eq("is_read", false);
-    if (error) {
-      $("#dashboardStatus").textContent = error.message;
-      return;
-    }
-    await fetchAll(false);
-  };
-
-  $("#enableBrowserAlertsBtn").onclick = async () => {
-    if ("Notification" in window) await Notification.requestPermission();
-  };
-
-  $("#logoutBtn").onclick = async () => {
-    clearInterval(syncTimer);
-    if (dataChannel) await cloudDb.removeChannel(dataChannel);
-    if (alertChannel) await cloudDb.removeChannel(alertChannel);
-    await syncAll(true);
-    await cloudDb.auth.signOut();
-    location.reload();
-  };
-
-  $("#exportCsvBtn").onclick = exportCsv;
-  $("#exportJsonBtn").onclick = () => download(JSON.stringify(rows, null, 2), "dk-admin-tool-data.json", "application/json");
-  $("#searchBox").oninput = renderTable;
-  $("#appFilter").onchange = renderTable;
-  $("#userFilter").onchange = renderTable;
-  $("#closeModalBtn").onclick = () => $("#jsonModal").hidden = true;
-  $("#jsonModal").onclick = (event) => {
-    if (event.target.id === "jsonModal") $("#jsonModal").hidden = true;
-  };
-  $("#toolFrame").addEventListener("load", () => setTimeout(() => {
-    syncAll(false).then(() => fetchAll(false)).catch(() => {});
-  }, 900));
-  window.addEventListener("storage", () => setTimeout(() => {
-    syncAll(false).then(() => fetchAll(false)).catch(() => {});
-  }, 300));
-  window.addEventListener("online", () => {
-    syncAll(true).then(() => fetchAll(false)).catch(() => {});
-  });
+  $("#backToolsBtn").addEventListener("click", showHome);
+  $("#syncNowBtn").addEventListener("click", () => syncSelectedTool(true));
+  $("#refreshBtn").addEventListener("click", () => fetchSelectedToolData().catch((error) => $("#dashboardStatus").textContent = error.message));
+  $("#exportCsvBtn").addEventListener("click", exportCsv);
+  $("#exportJsonBtn").addEventListener("click", exportJson);
+  $("#searchBox").addEventListener("input", renderSelectedData);
+  $("#closeModalBtn").addEventListener("click", () => $("#jsonModal").hidden = true);
+  $("#jsonModal").addEventListener("click", (event) => { if (event.target.id === "jsonModal") $("#jsonModal").hidden = true; });
+  $("#toolFrame").addEventListener("load", () => { if (activeTool) setTimeout(() => syncSelectedTool(false), 700); });
+  window.addEventListener("storage", () => { if (activeTool) setTimeout(() => syncSelectedTool(false), 300); });
+  window.addEventListener("online", () => { if (activeTool) syncSelectedTool(false); });
+  $("#logoutBtn").addEventListener("click", async () => { clearInterval(syncTimer); await cloudDb.auth.signOut(); location.reload(); });
 
   init().catch((error) => $("#loginMessage").textContent = error.message || "Dashboard start नहीं हुआ।");
 })();
