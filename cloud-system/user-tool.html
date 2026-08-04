@@ -41,5 +41,16 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="supabase-config.js"></script>
   <script src="user-tool.js"></script>
+  <script>
+    (()=>{
+      const el=document.getElementById('loginMessage');
+      if(!el)return;
+      const clean=()=>{
+        if(el.textContent.includes('Enter the code below')) el.textContent='Sign-in email sent. Open the email titled “Your sign-in link” and tap “Sign in”.';
+      };
+      new MutationObserver(clean).observe(el,{childList:true,subtree:true,characterData:true});
+      clean();
+    })();
+  </script>
 </body>
 </html>
