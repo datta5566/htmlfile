@@ -25,15 +25,16 @@
     <div class="login-card">
       <div class="icon" id="loginIcon">🧰</div>
       <h1 id="loginTitle">Office Tool Login</h1>
-      <p>Enter your work email. A secure one-time login code or sign-in link will be sent to your email. After login, this tool will save its data to the private Admin Dashboard automatically.</p>
+      <p>Enter your work email. You will receive an email titled <strong>Your sign-in link</strong>. Open that email and tap <strong>Sign in</strong>. No password is required.</p>
       <label class="field">Work Email<input id="emailInput" type="email" autocomplete="email" placeholder="name@company.com"></label>
-      <button class="btn primary" id="sendOtpBtn" type="button">Send Login Code</button>
+      <button class="btn primary" id="sendOtpBtn" type="button">Send Secure Sign-in Link</button>
       <div id="otpArea" hidden>
-        <label class="field">Email Code<input id="otpInput" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="000000"></label>
-        <div class="row"><button class="btn primary" id="verifyOtpBtn" type="button">Verify Code</button><button class="btn" id="checkLoginBtn" type="button">I Opened the Email Link</button></div>
+        <input id="otpInput" type="text" hidden>
+        <button id="verifyOtpBtn" type="button" hidden>Verify Code</button>
+        <div class="row"><button class="btn primary" id="checkLoginBtn" type="button">I Opened the Email Sign-in Link</button></div>
       </div>
       <p class="message" id="loginMessage"></p>
-      <p class="help">Your records remain private. You can access only your own cloud data; the Administrator can review all submitted records.</p>
+      <p class="help">Check Inbox, Updates and Spam if needed. After you open the email sign-in link, this tool will connect to the private cloud automatically.</p>
     </div>
   </section>
 
