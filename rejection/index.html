@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Rejection Management System</title>
+
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg,
+                    #0f172a,
+                    #1e293b,
+                    #111827);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+
+        /* LOGIN */
+
+        #loginPage {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-card {
+
+            width: 420px;
+
+            padding: 30px;
+
+            border-radius: 25px;
+
+            background: rgba(255,
+                    255,
+                    255,
+                    0.08);
+
+            backdrop-filter: blur(20px);
+
+            box-shadow:
+                0 8px 32px rgba(0,
+                    0,
+                    0,
+                    0.4);
+
+        }
+
+        .login-card h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .login-card input {
+
+            width: 100%;
+
+            padding: 14px;
+
+            border: none;
+
+            border-radius: 12px;
+
+            margin-bottom: 15px;
+
+        }
+
+        .login-card button {
+
+            width: 100%;
+
+            padding: 14px;
+
+            border: none;
+
+            border-radius: 12px;
+
+            background: #22c55e;
+
+            color: white;
+
+            font-weight: bold;
+
+            cursor: pointer;
+
+        }
+
+        /* APP */
+
+        #app {
+            display: none;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: auto;
+        }
+
+        /* DASHBOARD */
+
+        .stats-container {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(auto-fit,
+                    minmax(220px,
+                        1fr));
+
+            gap: 15px;
+
+            margin-bottom: 20px;
+
+        }
+
+        .stat-card {
+
+            padding: 20px;
+
+            border-radius: 20px;
+
+            background: rgba(255,
+                    255,
+                    255,
+                    0.08);
+
+            backdrop-filter: blur(15px);
+
+            text-align: center;
+
+        }
+
+        .stat-card h1 {
+            margin-top: 10px;
+        }
+
+        /* GLASS CARD */
+
+        .glass-card {
+
+            background: rgba(255,
+                    255,
+                    255,
+                    0.08);
+
+            backdrop-filter: blur(15px);
+
+            padding: 20px;
+
+            border-radius: 20px;
+
+            margin-bottom: 20px;
+
+        }
+
+        /* INPUTS */
+
+        textarea {
+
+            width: 100%;
+
+            height: 250px;
+
+            border: none;
+
+            border-radius: 15px;
+
+            padding: 15px;
+
+            resize: none;
+
+            font-size: 14px;
+
+        }
+
+        input,
+        select {
+
+            padding: 12px;
+
+            border: none;
+
+            border-radius: 12px;
+
+            margin: 5px;
+
+        }
+
+        /* BUTTONS */
+
+        .button-group {
+
+            display: flex;
+
+            flex-wrap: wrap;
+
+            gap: 10px;
+
+            margin-top: 15px;
+
+        }
+
+        button {
+
+            padding: 12px 18px;
+
+            border: none;
+
+            border-radius: 12px;
+
+            cursor: pointer;
+
+            font-weight: bold;
+
+            color: white;
+
+        }
+
+        .btn-green {
+            background: #22c55e;
+        }
+
+        .btn-blue {
+            background: #3b82f6;
+        }
+
+        .btn-purple {
+            background: #8b5cf6;
+        }
+
+        .btn-orange {
+            background: #f59e0b;
+        }
+
+        .btn-red {
+            background: #ef4444;
+        }
+
+        /* TABLE */
+
+        .table-container {
+
+            overflow: auto;
+
+            max-height: 650px;
+
+        }
+
+        table {
+
+            width: 100%;
+
+            border-collapse: collapse;
+
+        }
+
+        th {
+
+            background: #111827;
+
+            position: sticky;
+
+            top: 0;
+
+            padding: 10px;
+
+            border: 1px solid #333;
+
+        }
+
+        td {
+
+            padding: 8px;
+
+            border: 1px solid #444;
+
+            background: rgba(255,
+                    255,
+                    255,
+                    0.04);
+
+        }
+
+        .editable {
+            background: rgba(255,
+                    255,
+                    255,
+                    0.05);
+        }
+
+        .delete-btn {
+            background: #dc2626;
+        }
+
+        /* SEARCH */
+
+        .search-bar {
+
+            width: 100%;
+
+            padding: 14px;
+
+            margin-top: 15px;
+
+            border-radius: 12px;
+
+        }
+
+        /* FILTERS */
+
+        .filter-row {
+
+            display: flex;
+
+            flex-wrap: wrap;
+
+            gap: 10px;
+
+            margin-top: 15px;
+
+            margin-bottom: 15px;
+
+        }
+
+        /* HEADING */
+
+        .main-title {
+
+            text-align: center;
+
+            margin-bottom: 20px;
+
+            font-size: 30px;
+
+        }
+
+        /* INSTALL / WELCOME OVERLAYS */
+
+        #installOverlay,
+        #welcomeScreen {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 9999;
+            padding: 20px;
+        }
+
+        .install-card {
+            width: 320px;
+            max-width: 92%;
+            background: linear-gradient(180deg, #ffffff, #f3f4f6);
+            color: #111827;
+            border-radius: 20px;
+            padding: 18px;
+            box-shadow: 0 14px 40px rgba(2, 6, 23, 0.6);
+            text-align: center;
+        }
+
+        .install-card .icon {
+            width: 72px;
+            height: 72px;
+            margin: 8px auto 12px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: 24px;
+        }
+
+        .install-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 14px
+        }
+
+        .install-actions button {
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer
+        }
+
+        .install-actions .primary {
+            background: #3b82f6;
+            color: #fff
+        }
+
+        .install-actions .secondary {
+            background: transparent;
+            border: 1px solid #cbd5e1;
+            color: #111
+        }
+
+        .welcome-card {
+            width: 480px;
+            max-width: 92%;
+            height: 260px;
+            background: linear-gradient(135deg, #06b6d4, #8b5cf6);
+            color: #fff;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            transform-style: preserve-3d;
+            box-shadow: 0 20px 60px rgba(2, 6, 23, 0.6);
+            text-align: center;
+            padding: 20px;
+            animation: welcomeEntry 0.8s cubic-bezier(.2, .9, .3, 1), welcomeFloat 3s ease-in-out 0.8s infinite;
+        }
+
+        .welcome-card h1 {
+            font-size: 34px;
+            margin-bottom: 6px
+        }
+
+        .welcome-card p {
+            opacity: 0.95
+        }
+
+        @keyframes welcomeEntry {
+            0% {
+                transform: perspective(800px) translateY(40px) rotateX(70deg) scale(.85);
+                opacity: 0
+            }
+
+            100% {
+                transform: perspective(800px) translateY(0) rotateX(0) scale(1);
+                opacity: 1
+            }
+        }
+
+        @keyframes welcomeFloat {
+            0% {
+                transform: rotateY(-12deg)
+            }
+
+            50% {
+                transform: rotateY(12deg)
+            }
+
+            100% {
+                transform: rotateY(-12deg)
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- INSTALL PROMPT -->
+    <div id="installOverlay">
+        <div class="install-card">
+            <div class="icon">R</div>
+            <h3>Install Rejection System</h3>
+            <p>Install this page like an app for faster access and a mobile-like experience.</p>
+            <div class="install-actions">
+                <button class="primary" onclick="doInstall()">Install</button>
+                <button class="secondary" onclick="closeInstall()">Maybe Later</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- WELCOME SCREEN -->
+    <div id="welcomeScreen">
+        <div class="welcome-card">
+            <h1>Welcome</h1>
+            <p>Rejection Management System</p>
+        </div>
+    </div>
+
+    <!-- LOGIN -->
+
+    <div id="loginPage">
+
+        <div class="login-card">
+
+            <h2>
+                Rejection Management System
+            </h2>
+
+            <input type="password" id="password" placeholder="Enter Password">
+
+            <button onclick="login()">
+                Login
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- APP -->
+
+    <div id="app">
+
+        <div class="container">
+
+            <h1 class="main-title">
+                Rejection Management System
+            </h1>
+
+            <!-- DASHBOARD -->
+
+            <div class="stats-container">
+
+                <div class="stat-card">
+                    <h3>Total Records</h3>
+                    <h1 id="totalRecords">0</h1>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Total Reject Qty</h3>
+                    <h1 id="totalQty">0</h1>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Today's Records</h3>
+                    <h1 id="todayRecords">0</h1>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Total Parts</h3>
+                    <h1 id="totalParts">0</h1>
+                </div>
+
+            </div>
+
+            <!-- IMPORT -->
+
+            <div class="glass-card">
+
+                <h2>WhatsApp Import</h2>
+
+                <textarea id="messageInput" placeholder="Paste WhatsApp Messages Here">
+</textarea>
+
+                <div class="button-group">
+
+                    <button class="btn-green" onclick="convertData()">
+                        Convert
+                    </button>
+
+                    <button class="btn-orange" onclick="saveData()">
+                        Save
+                    </button>
+
+                    <button class="btn-blue" onclick="showSavedData()">
+                        Show Saved
+                    </button>
+
+                    <button class="btn-purple" onclick="downloadExcel()">
+                        Export Excel
+                    </button>
+
+                    <button class="btn-red" onclick="backupJSON()">
+                        Backup JSON
+                    </button>
+
+                    <button class="btn-blue" onclick="openRestore()">
+                        Restore JSON
+                    </button>
+
+                    <button class="btn-blue" onclick="generateBarcodeList()">
+                        Generate Barcode List
+                    </button>
+
+                    <button class="btn-red" onclick="clearAllRecords()">
+                        Clear All
+                    </button>
+
+                </div>
+
+                <input type="file" accept=".xlsx" onchange="importExcel(event)">
+
+            </div>
+
+            <!-- SEARCH -->
+
+            <div class="glass-card">
+
+                <input type="text" id="searchBox" class="search-bar"
+                    placeholder="Search Name / Barcode / IPO / Part Name" onkeyup="searchData()">
+
+                <div class="filter-row">
+
+                    <select id="unitFilter">
+                        <option>ALL</option>
+                        <option>KN-05</option>
+                        <option>KN-06</option>
+                        <option>SKYLINE</option>
+                    </select>
+
+                    <select id="shiftFilter">
+                        <option>ALL</option>
+                        <option>A</option>
+                        <option>B</option>
+                        <option>C</option>
+                    </select>
+
+                    <input type="date" id="fromDate">
+                    <input type="date" id="toDate">
+
+                    <button class="btn-green" onclick="filterDateRange()">
+                        Apply Filter
+                    </button>
+
+                </div>
+
+            </div>
+
+            <!-- TABLE -->
+
+            <div class="glass-card">
+
+                <div class="table-container">
+
+                    <table id="dataTable">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>SR</th>
+                                <th>Employee</th>
+                                <th>Unit</th>
+                                <th>Date</th>
+                                <th>Shift</th>
+                                <th>Qty</th>
+                                <th>Part Name</th>
+                                <th>Barcode</th>
+                                <th>IPO No</th>
+                                <th>Rejection</th>
+                                <th>Required</th>
+                                <th>Observed</th>
+                                <th>Action</th>
+                                <th>Photo</th>
+                                <th>Delete</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+
+        const LOGIN_PASSWORD = "12345";
+
+        let records = [];
+
+        function login() {
+
+            let pass =
+                document.getElementById(
+                    "password"
+                ).value;
+
+
+            if (pass === LOGIN_PASSWORD) {
+
+                // hide login and show install prompt if first time
+                document.getElementById("loginPage").style.display = "none";
+
+                const shown = localStorage.getItem('install_shown');
+
+                if (!shown) {
+
+                    document.getElementById('installOverlay').style.display = 'flex';
+
+                    localStorage.setItem('install_shown', '1');
+
+                } else {
+
+                    showWelcomeThenApp();
+
+                }
+
+            } else {
+
+                alert("Wrong Password");
+
+            }
+
+        }
+
+        function doInstall() {
+
+            // for demo: just close install and show welcome
+            document.getElementById('installOverlay').style.display = 'none';
+
+            showWelcomeThenApp();
+
+        }
+
+        function closeInstall() {
+
+            document.getElementById('installOverlay').style.display = 'none';
+
+            showWelcomeThenApp();
+
+        }
+
+        function showWelcomeThenApp() {
+
+            const welcome = document.getElementById('welcomeScreen');
+
+            welcome.style.display = 'flex';
+
+            // show for 3 seconds then open main app
+            setTimeout(() => {
+
+                welcome.style.display = 'none';
+
+                document.getElementById('app').style.display = 'block';
+
+                loadSavedData();
+
+            }, 3000);
+
+        }
+        /* ==========================
+           DATA PARSER
+        ========================== */
+
+        function getField(text, label) {
+
+            const regex =
+                new RegExp(
+                    label + "\\s*[:\\-]\\s*(.*)",
+                    "i"
+                );
+
+            const match =
+                text.match(regex);
+
+            return match
+                ? match[1].trim()
+                : "";
+
+        }
+
+        /* ==========================
+           CONVERT DATA
+        ========================== */
+
+        function convertData() {
+
+            const input =
+                document
+                    .getElementById(
+                        "messageInput"
+                    )
+                    .value
+                    .trim();
+
+            if (!input) {
+
+                alert(
+                    "Paste WhatsApp Messages"
+                );
+
+                return;
+
+            }
+
+            const messages =
+                input.split(
+                    /-{5,}/
+                );
+
+            messages.forEach(msg => {
+
+                if (msg.trim() === "")
+                    return;
+
+                const row = {
+
+                    employeeName:
+                        getField(
+                            msg,
+                            "Employee Name"
+                        ),
+
+                    unit:
+                        getField(
+                            msg,
+                            "Unit"
+                        ),
+
+                    date:
+                        getField(
+                            msg,
+                            "Date"
+                        ),
+
+                    shift:
+                        getField(
+                            msg,
+                            "Shift"
+                        ),
+
+                    qty:
+                        getField(
+                            msg,
+                            "Total Qty Reject"
+                        ),
+
+                    partName:
+                        getField(
+                            msg,
+                            "Part Name"
+                        ),
+
+                    barcode:
+                        getField(
+                            msg,
+                            "Part Barcode"
+                        ),
+
+                    ipo:
+                        getField(
+                            msg,
+                            "Part IPO No"
+                        ),
+
+                    rejection:
+                        getField(
+                            msg,
+                            "Rejection Details"
+                        ),
+
+                    required:
+                        getField(
+                            msg,
+                            "Required"
+                        ),
+
+                    observed:
+                        getField(
+                            msg,
+                            "Observed"
+                        ),
+
+                    action:
+                        getField(
+                            msg,
+                            "Action Taken"
+                        )
+
+                };
+
+                // Allow duplicate barcodes: keep every message as-is
+
+                records.push(row);
+
+            });
+
+            renderTable();
+
+            saveData();
+
+            alert(
+                "Import Completed"
+            );
+
+        }
+
+        /* ==========================
+           TABLE
+        ========================== */
+
+        function renderTable() {
+
+            const tbody =
+                document.querySelector(
+                    "#dataTable tbody"
+                );
+
+            tbody.innerHTML = "";
+
+            records.forEach(
+                (record, index) => {
+
+                    const tr =
+                        document.createElement(
+                            "tr"
+                        );
+
+                    tr.innerHTML = `
+
+<td>${index + 1}</td>
+
+<td contenteditable="true"
+class="editable"
+onblur="updateCell(${index},'employeeName',this.innerText)">
+${record.employeeName || ''}
+</td>
+
+<td contenteditable="true"
+class="editable"
+onblur="updateCell(${index},'unit',this.innerText)">
+${record.unit || ''}
+</td>
+
+<td contenteditable="true"
+class="editable"
+onblur="updateCell(${index},'date',this.innerText)">
+${record.date || ''}
+</td>
+
+<td contenteditable="true"
+class="editable"
+onblur="updateCell(${index},'shift',this.innerText)">
+${record.shift || ''}
+</td>
+
+<td contenteditable="true"
+class="editable"
+onblur="updateCell(${index},'qty',this.innerText)">
+${record.qty || ''}
+</td>
+
+<td contenteditable="true"
+class="editable"
+onblur="updateCell(${index},'partName',this.innerText)">
+${record.partName || ''}
+</td>
+
+<td contenteditable="true"
+class="editable"
+onblur="updateCell(${index},'barcode',this.innerText)">
+${record.barcode || ''}
+</td>
+
+<td contenteditable="true"
+class="editable"
+onblur="updateCell(${index},'ipo',this.innerText)">
+${record.ipo || ''}
+</td>
+
+<td contenteditable="true"
+class="editable"
+onblur="updateCell(${index},'rejection',this.innerText)">
+${record.rejection || ''}
+</td>
+
+<td contenteditable="true"
+class="editable"
+onblur="updateCell(${index},'required',this.innerText)">
+${record.required || ''}
+</td>
+
+<td contenteditable="true"
+class="editable"
+onblur="updateCell(${index},'observed',this.innerText)">
+${record.observed || ''}
+</td>
+
+<td contenteditable="true"
+class="editable"
+onblur="updateCell(${index},'action',this.innerText)">
+${record.action || ''}
+</td>
+
+<td>
+<input type="file"
+accept="image/*">
+</td>
+
+<td>
+<button
+class="delete-btn"
+onclick="deleteRow(${index})">
+Delete
+</button>
+</td>
+
+`;
+
+                    tbody.appendChild(
+                        tr
+                    );
+
+                });
+
+            updateDashboard();
+
+        }
+
+        /* ==========================
+           EDIT CELL
+        ========================== */
+
+        function updateCell(
+            index,
+            field,
+            value
+        ) {
+
+            records[index][field] = value;
+
+            saveData();
+
+        }
+
+        /* DELETE */
+
+        function deleteRow(index) {
+
+            if (
+                !confirm(
+                    "Delete Record?"
+                )
+            )
+                return;
+
+            records.splice(
+                index,
+                1
+            );
+
+            renderTable();
+
+            saveData();
+
+        }
+
+        /* ==========================
+           SAVE
+        ========================== */
+
+        function saveData() {
+
+            localStorage.setItem(
+                "rejection_records",
+                JSON.stringify(records)
+            );
+
+        }
+
+        /* LOAD */
+
+        function loadSavedData() {
+
+            const saved =
+                localStorage.getItem(
+                    "rejection_records"
+                );
+
+            if (saved) {
+
+                records =
+                    JSON.parse(saved);
+
+                renderTable();
+
+            }
+
+        }
+
+        function showSavedData() {
+
+            loadSavedData();
+
+        }
+
+        /* ==========================
+           SEARCH
+        ========================== */
+
+        function searchData() {
+
+            const keyword =
+                document
+                    .getElementById(
+                        "searchBox"
+                    )
+                    .value
+                    .toLowerCase();
+
+            const rows =
+                document.querySelectorAll(
+                    "#dataTable tbody tr"
+                );
+
+            rows.forEach(row => {
+
+                const text =
+                    row.innerText
+                        .toLowerCase();
+
+                row.style.display =
+                    text.includes(keyword)
+                        ? ""
+                        : "none";
+
+            });
+
+        }
+
+        /* ==========================
+           DASHBOARD
+        ========================== */
+
+        function updateDashboard() {
+
+            document
+                .getElementById(
+                    "totalRecords"
+                )
+                .innerText =
+                records.length;
+
+            let qty = 0;
+
+            records.forEach(r => {
+
+                qty +=
+                    Number(r.qty) || 0;
+
+            });
+
+            document
+                .getElementById(
+                    "totalQty"
+                )
+                .innerText = qty;
+
+            document
+                .getElementById(
+                    "totalParts"
+                )
+                .innerText =
+                new Set(
+                    records.map(
+                        r => r.partName
+                    )
+                ).size;
+
+        }
+
+        /* ==========================
+           EXCEL EXPORT
+        ========================== */
+
+        function downloadExcel() {
+
+            if (records.length === 0) {
+
+                alert("No Data");
+
+                return;
+
+            }
+
+            const ws =
+                XLSX.utils.json_to_sheet(
+                    records
+                );
+
+            const wb =
+                XLSX.utils.book_new();
+
+            XLSX.utils.book_append_sheet(
+                wb,
+                ws,
+                "Rejection Data"
+            );
+
+            XLSX.writeFile(
+                wb,
+                "Rejection_Data.xlsx"
+            );
+
+        }
+
+        function generateBarcodeList() {
+
+            if (records.length === 0) {
+
+                alert("No Data to generate barcodes");
+
+                return;
+
+            }
+
+            const list = [];
+
+            records.forEach(r => {
+
+                const barcode = (r.barcode || '').trim();
+
+                if (!barcode) return;
+
+                let qty = Number(r.qty) || 1;
+
+                qty = Math.max(1, Math.floor(qty));
+
+                for (let i = 0; i < qty; i++) list.push(barcode);
+
+            });
+
+            if (list.length < 50) {
+
+                if (list.length > 0) {
+
+                    let i = 0;
+
+                    while (list.length < 50) {
+
+                        list.push(list[i % list.length]);
+
+                        i++;
+
+                    }
+
+                } else {
+
+                    while (list.length < 50) list.push('');
+
+                }
+
+            }
+
+            const popup = window.open('', '_blank');
+
+            if (!popup) {
+
+                alert('Popup blocked. Please allow popups for this site.');
+
+                return;
+
+            }
+
+            const css = '<style>body{font-family:Arial,sans-serif;padding:20px;color:#000;background:#fff} .barcode{margin:4px 0;font-size:14px;white-space:pre-wrap}</style>';
+
+            let html = '<!doctype html><html><head><meta charset="utf-8">' + css + '</head><body>';
+
+            html += list.map(b => '<div class="barcode">' + (b || '&nbsp;') + '</div>').join('');
+
+            html += '</body></html>';
+
+            popup.document.write(html);
+
+            popup.document.close();
+
+        }
+
+        /* ==========================
+           EXCEL IMPORT
+        ========================== */
+
+        function importExcel(event) {
+
+            const file =
+                event.target.files[0];
+
+            if (!file) return;
+
+            const reader =
+                new FileReader();
+
+            reader.onload =
+                function (e) {
+
+                    const data =
+                        new Uint8Array(
+                            e.target.result
+                        );
+
+                    const workbook =
+                        XLSX.read(
+                            data,
+                            {
+                                type: 'array'
+                            }
+                        );
+
+                    const sheet =
+                        workbook.Sheets[
+                        workbook.SheetNames[0]
+                        ];
+
+                    records =
+                        XLSX.utils.sheet_to_json(
+                            sheet
+                        );
+
+                    renderTable();
+
+                    saveData();
+
+                };
+
+            reader.readAsArrayBuffer(
+                file
+            );
+
+        }
+
+        /* ==========================
+           JSON BACKUP
+        ========================== */
+
+        function backupJSON() {
+
+            const blob =
+                new Blob(
+                    [
+                        JSON.stringify(
+                            records,
+                            null,
+                            2
+                        )
+                    ],
+                    {
+                        type:
+                            "application/json"
+                    }
+                );
+
+            const url =
+                URL.createObjectURL(
+                    blob
+                );
+
+            const a =
+                document.createElement(
+                    "a"
+                );
+
+            a.href = url;
+
+            a.download =
+                "Backup.json";
+
+            a.click();
+
+        }
+
+        /* RESTORE */
+
+        function openRestore() {
+
+            const input =
+                document.createElement(
+                    "input"
+                );
+
+            input.type = "file";
+
+            input.accept = ".json";
+
+            input.onchange =
+                function (e) {
+
+                    const file =
+                        e.target.files[0];
+
+                    const reader =
+                        new FileReader();
+
+                    reader.onload =
+                        function (ev) {
+
+                            records =
+                                JSON.parse(
+                                    ev.target.result
+                                );
+
+                            renderTable();
+
+                            saveData();
+
+                        };
+
+                    reader.readAsText(
+                        file
+                    );
+
+                };
+
+            input.click();
+
+        }
+
+        /* ==========================
+           DATE FILTER
+        ========================== */
+
+        function filterDateRange() {
+
+            const from =
+                document
+                    .getElementById(
+                        "fromDate"
+                    )
+                    .value;
+
+            const to =
+                document
+                    .getElementById(
+                        "toDate"
+                    )
+                    .value;
+
+            alert(
+                "Date Filter Ready"
+            );
+
+        }
+
+        /* ==========================
+           CLEAR ALL
+        ========================== */
+
+        function clearAllRecords() {
+
+            if (
+                !confirm(
+                    "Delete All Records?"
+                )
+            )
+                return;
+
+            records = [];
+
+            renderTable();
+
+            saveData();
+
+        }
+
+        /* ==========================
+           AUTO SAVE
+        ========================== */
+
+        setInterval(() => {
+
+            saveData();
+
+        }, 30000);
+
+        console.log(
+            "System Ready"
+        );
+
+    </script>
+
+</body>
+
+</html>
