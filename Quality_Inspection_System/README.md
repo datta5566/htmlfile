@@ -97,3 +97,13 @@ Phase 8 adds a dedicated professional inspection report view with printable/PDF-
 - A successful scan opens the saved inspection and its professional report; it does not create or bypass inspection gates.
 - If the inspection is not present in local history, the screen clearly reports that limitation.
 - Runtime/full testing remains deferred until the final project testing phase.
+
+
+## Phase 12 — Backup / Restore & Data Portability
+- Keeps backup and restore inside the same Quality Inspection System project.
+- Adds validated JSON backup restore for moving inspection history between devices.
+- Merges records by Inspection ID while preserving unrelated local records.
+- Rejects invalid JSON and records without a valid Inspection ID.
+- Restored records become available to Phase 11 QR / Sticker Traceability local lookup.
+- Existing inspection gates and decision logic are unchanged.
+- Runtime/full testing remains deferred until the final project testing phase.
