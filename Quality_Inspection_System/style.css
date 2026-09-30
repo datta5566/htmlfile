@@ -53,3 +53,7 @@
 /* Phase 17 — Offline / PWA mobile workflow */
 #networkState{min-width:62px;text-align:center}.top-actions{flex-wrap:wrap}.top-actions .hidden{display:none!important}
 @media(max-width:760px){.top-actions{gap:6px}.top-actions button,.top-actions .pill{font-size:10px;padding:7px 9px}}
+
+/* Phase 18 — Draft autosave / recovery */
+#draftState{max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.top-actions .hidden{display:none!important}
+@media(max-width:760px){#draftState{max-width:120px}.top-actions{align-items:center}}
