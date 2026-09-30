@@ -32,3 +32,7 @@
 /* Phase 9: evidence and audit traceability */
 .report-evidence-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.report-evidence{border:1px solid #d8e0ea;border-radius:12px;padding:10px;background:#fff}.report-evidence img{width:100%;max-height:220px;object-fit:contain;border-radius:8px;margin-top:8px}.report-evidence small{display:block;color:#64748b;line-height:1.45}.photo-card{border:1px solid #d8e0ea;border-radius:12px;padding:10px;margin-top:10px}.photo-card img{display:block;width:100%;max-height:260px;object-fit:contain;margin:8px 0;border-radius:8px}.photo-card small{color:#64748b}.approval-box{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.approval-box .wide{grid-column:1/-1}@media(max-width:700px){.approval-box{grid-template-columns:1fr}.approval-box .wide{grid-column:auto}}
 @media print{.report-evidence-grid{grid-template-columns:repeat(2,1fr)}.report-evidence img{max-height:180px}.professional-report{box-shadow:none}}
+
+/* Phase 10: QR traceability */
+.qr-report{display:flex;gap:18px;align-items:center;flex-wrap:wrap}.qr-report textarea{min-width:280px;min-height:100px}.report-evidence-grid{break-inside:avoid}
+@media print{.qr-report textarea{border:0;min-height:70px}.qr-report{break-inside:avoid}}
