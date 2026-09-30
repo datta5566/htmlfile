@@ -15,3 +15,7 @@
 .photo-card img{max-width:100%;max-height:320px;object-fit:contain;display:block;margin:8px 0;border-radius:10px}.photo-card button{margin-top:6px}
 @media(max-width:760px){.visual-head{flex-direction:column;align-items:stretch}.visual-head select{width:100%}.visual-fields,.rework-fields{grid-template-columns:1fr 1fr}.visual-fields label:last-child,.rework-fields label:last-child{grid-column:1/-1}}
 @media(max-width:480px){.visual-fields,.rework-fields{grid-template-columns:1fr}.visual-fields label:last-child,.rework-fields label:last-child{grid-column:auto}}
+
+/* Phase 6 — final approval/report */
+.report-meta{margin-bottom:12px}.report-summary{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;margin:14px 0;border:1px solid rgba(255,255,255,.1);border-radius:12px}.report-summary b{font-size:1.15rem}
+@media print{body{background:#fff!important;color:#111!important}.topbar,.tabs,.section-head button,.row button,.ghost,.secondary,.primary,.danger,.warning-btn{display:none!important}.tab{display:none!important}.tab#review{display:block!important}.card{box-shadow:none!important;border:1px solid #bbb!important;break-inside:avoid}.gate-checks{color:#111!important}}
