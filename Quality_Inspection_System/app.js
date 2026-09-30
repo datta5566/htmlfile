@@ -137,6 +137,16 @@ function buildTraceabilityPayload(){const p=current?.part||{},d=current?.drawing
 
 
 window.DKQualityInspection = window.DKQualityInspection || {};
+window.DKQualityInspection.setScannedBarcode = (barcode, raw='') => {
+  if(!current) return false;
+  current.part=current.part||{};
+  current.part.barcode=String(barcode||'').trim();
+  if(raw && $('stickerRaw')) $('stickerRaw').value=raw;
+  if($('barcode')) $('barcode').value=current.part.barcode;
+  updateIdentityGate();
+  renderReview();
+  return true;
+};
 window.DKQualityInspection.getRecords = () => JSON.parse(JSON.stringify(records));
 window.DKQualityInspection.replaceRecords = (next) => {
   if(!Array.isArray(next)) return false;

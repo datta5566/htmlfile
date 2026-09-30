@@ -46,3 +46,6 @@
 
 /* Phase 15 — OCR */
 .ocr-candidates{display:grid;gap:8px;margin-top:10px}.ocr-row{display:flex;justify-content:space-between;gap:10px;padding:10px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:#0b1626}.ocr-row em{font-style:normal;font-size:10px;font-weight:800}.ready{border-color:rgba(100,220,160,.35)}
+
+/* Phase 16 — Camera QR / Barcode scanner */
+.scanner-modal{position:fixed;inset:0;z-index:1000;background:rgba(2,8,18,.88);display:flex;align-items:center;justify-content:center;padding:16px}.scanner-modal.hidden{display:none}.scanner-card{width:min(720px,100%);background:#081424;border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:16px;box-shadow:0 20px 60px rgba(0,0,0,.45)}#scannerVideo{display:block;width:100%;max-height:62vh;object-fit:cover;border-radius:14px;background:#02060c}.scanner-frame{position:absolute;left:50%;top:50%;width:min(65vw,420px);height:min(38vw,240px);transform:translate(-50%,-50%);border:2px solid rgba(255,255,255,.8);border-radius:16px;pointer-events:none}.scanner-card{position:relative}.scanner-card .section-head,.scanner-card .row{position:relative;z-index:2}.scanner-card .section-head{background:linear-gradient(rgba(8,20,36,.95),rgba(8,20,36,.7));padding-bottom:10px}.scanner-card .row{margin-top:10px}

@@ -144,3 +144,15 @@ Phase 8 adds a dedicated professional inspection report view with printable/PDF-
 - PDF drawings continue through the existing drawing verification/manual extraction workflow; image OCR can be used when an image representation is available.
 - Existing drawing identity, measurement tolerance and HOLD rules remain unchanged.
 - Runtime/full testing remains deferred until final project testing.
+
+
+## Phase 16 — Camera QR / Barcode Scanner Workflow
+- Adds a mobile-friendly camera scanner overlay for QR and common 1D barcode formats through the browser BarcodeDetector API when supported.
+- Uses the rear/environment camera when available.
+- Adds native Android scanner callback support through the existing bridge.
+- A scanned Phase 10/11 inspection QR opens the saved inspection traceability workflow.
+- A scanned sticker/barcode populates the inspection identity and sticker payload, then continues through the existing identity gate.
+- Camera scan does not bypass Project/Part/Drawing/Revision verification and does not create an automatic PASS.
+- If browser BarcodeDetector is unavailable, the existing Android/manual fallback remains available.
+- Camera stream is stopped after a successful scan or when the scanner is closed.
+- Testing remains deferred until final project testing.
