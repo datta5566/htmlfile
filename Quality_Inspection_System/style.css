@@ -57,3 +57,7 @@
 /* Phase 18 — Draft autosave / recovery */
 #draftState{max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.top-actions .hidden{display:none!important}
 @media(max-width:760px){#draftState{max-width:120px}.top-actions{align-items:center}}
+
+
+/* Phase 19 — Inspection Audit Trail */
+.audit-timeline{display:grid;gap:10px}.audit-event{display:grid;grid-template-columns:14px 1fr;gap:12px;padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:#0b1626}.audit-event>div:last-child{min-width:0}.audit-dot{width:10px;height:10px;border-radius:50%;margin-top:5px;background:#7dd3fc;box-shadow:0 0 0 4px rgba(125,211,252,.08)}.audit-event b{display:block;font-size:12px}.audit-event small{display:block;color:#8ea0b7;margin-top:3px;font-size:10px}.audit-event p{margin:7px 0 0;color:#c8d3e1;font-size:12px;word-break:break-word}

@@ -181,3 +181,15 @@ Phase 8 adds a dedicated professional inspection report view with printable/PDF-
 - LocalStorage quota/storage failures are surfaced as DRAFT STORAGE FULL rather than silently pretending the draft was saved.
 - Existing identity, drawing, measurement, process, visual, evidence, approval, QR and PASS/REJECT/HOLD gates remain unchanged.
 - Runtime/full testing remains deferred until the final project testing phase.
+
+
+## Phase 19 — Inspection Audit Trail
+- Adds an Audit Trail screen for the current inspection.
+- Records key lifecycle events with event ID, timestamp and inspector identity.
+- Records inspection creation, section navigation, barcode scan, draft/record resume and final inspection save events.
+- Audit timeline is shown chronologically in the Audit Trail screen.
+- Maximum retained audit events per inspection is 200 to keep local records bounded.
+- Audit data is stored inside the inspection record and follows the existing LocalStorage / JSON backup workflow.
+- This is local workflow traceability, not secure server-side audit logging; production security still requires authenticated server enforcement.
+- Existing inspection gates and PASS/REJECT/HOLD logic remain unchanged.
+- Runtime/full testing remains deferred until the final project testing phase.
