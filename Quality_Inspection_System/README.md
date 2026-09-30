@@ -87,3 +87,13 @@ Phase 8 adds a dedicated professional inspection report view with printable/PDF-
 - QR is intended for traceability/reference; it does not bypass existing inspection gates.
 - Uses the QRCode.js browser library for QR rendering.
 - Runtime/full testing remains deferred until the final testing phase.
+
+
+## Phase 11 — QR / Sticker Traceability Retrieval
+- Keeps QR traceability inside the same Quality Inspection System project.
+- Adds a dedicated QR / Sticker Traceability screen for retrieving saved inspections.
+- Supports the Phase 10 JSON QR payload by Inspection ID, with barcode/project/part fallback matching.
+- Adds a native Android scanner hook and browser-safe manual payload lookup.
+- A successful scan opens the saved inspection and its professional report; it does not create or bypass inspection gates.
+- If the inspection is not present in local history, the screen clearly reports that limitation.
+- Runtime/full testing remains deferred until the final project testing phase.
