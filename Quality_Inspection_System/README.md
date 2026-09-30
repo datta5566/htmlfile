@@ -6,8 +6,12 @@ Mobile-first Aluminium Formwork part inspection application.
 - Inspector login/session name
 - Sticker/QR manual parsing with Android scanner bridge hook
 - Project/part/barcode/drawing/revision identity gate
+- Part ↔ drawing mapping gate; mismatched project/part/drawing/revision blocks final PASS
 - Approved drawing PDF/image upload and viewer
 - Drawing/manual verification hold state
+- Dynamic drawing characteristics: dimension, hole, milling, stiffener, position, angle and other
+- Drawing reference, nominal, tolerance, actual, unit, critical flag and result fields
+- Verified drawing text → characteristic builder with Manual Verification Required safety state
 - Dynamic dimension characteristics with nominal ± tolerance calculation
 - Cutting, Punching, Milling, Welding, Grinding, Cleaning, Lacquering and Final Inspection process gates
 - Manual/visual inspection checklist
@@ -19,6 +23,9 @@ Mobile-first Aluminium Formwork part inspection application.
 
 ## Source
 The implementation follows the uploaded Quality Inspection & Process Verification master requirement.
+
+## Phase 2 status
+Phase 2 implementation is complete on the `phase-2-drawing-processing` branch. Full end-to-end testing is intentionally deferred until the final project testing stage.
 
 ## Important limitation
 The browser build displays uploaded drawings but does not silently infer unreadable dimensions. Drawing OCR/automatic dimension extraction and camera measurement assistance remain extension points; uncertain values must be manually verified.
