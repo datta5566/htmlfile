@@ -1,0 +1,11 @@
+{
+  "name":"DK Quality Inspection System",
+  "short_name":"DK Quality Pro",
+  "description":"Aluminium formwork quality inspection, process verification and traceability.",
+  "start_url":"./index.html",
+  "display":"standalone",
+  "background_color":"#07111f",
+  "theme_color":"#07111f",
+  "orientation":"portrait-primary",
+  "categories":["business","productivity","utilities"]
+}
