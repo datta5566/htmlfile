@@ -24,6 +24,11 @@ Mobile-first Aluminium Formwork part inspection application.
 ## Source
 The implementation follows the uploaded Quality Inspection & Process Verification master requirement.
 
+## Phase 4 status
+Phase 4 implementation is complete on the `phase-4-process-traceability` branch. Testing remains intentionally deferred until the final project testing stage.
+
+Phase 4 adds structured manufacturing-process traceability for Cutting, Punching, Milling, Welding, Grinding, Cleaning, Lacquering / Surface Treatment and Final Inspection. Each process stores status, operator/employee, process date, machine/line, batch/job/lot and process remark. Completed processes must have the required traceability fields before final PASS; NOT APPLICABLE processes remain explicitly recorded. Existing older string-based process records are normalized when opened.
+
 ## Phase 3 status
 Phase 3 implementation is complete on the `phase-3-measurement-inspection` branch. Testing remains intentionally deferred until the final project testing stage.
 
