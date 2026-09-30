@@ -168,3 +168,16 @@ Phase 8 adds a dedicated professional inspection report view with printable/PDF-
 - External CDN resources such as Tesseract.js / QRCode.js may still require network access unless separately bundled; the offline shell is not treated as offline AI/OCR availability.
 - Existing inspection gates and PASS/REJECT/HOLD logic remain unchanged.
 - Runtime/full testing remains deferred until the final project testing phase.
+
+
+## Phase 18 — Draft Autosave & Recovery
+- Adds an active inspection draft stored locally in the same Quality Inspection System.
+- Draft autosaves after user input/change with a short debounce and also on page exit/backgrounding.
+- Adds a Draft status indicator and Resume Draft control in the top bar.
+- Resume Draft restores the complete unsaved inspection state without creating a duplicate saved history record.
+- Starting a new inspection clears the previous active draft.
+- A successfully saved final inspection clears the active draft; if final approval validation rejects the save, the draft remains available for recovery.
+- Draft recovery is local-device only and does not claim cloud synchronization.
+- LocalStorage quota/storage failures are surfaced as DRAFT STORAGE FULL rather than silently pretending the draft was saved.
+- Existing identity, drawing, measurement, process, visual, evidence, approval, QR and PASS/REJECT/HOLD gates remain unchanged.
+- Runtime/full testing remains deferred until the final project testing phase.
