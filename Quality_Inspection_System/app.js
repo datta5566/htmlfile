@@ -147,6 +147,8 @@ window.DKQualityInspection.setScannedBarcode = (barcode, raw='') => {
   renderReview();
   return true;
 };
+window.DKQualityInspection.getCurrent = () => current ? JSON.parse(JSON.stringify(current)) : null;
+window.DKQualityInspection.setCurrent = (next) => { if(!next || typeof next!=='object' || !next.id) return false; current=JSON.parse(JSON.stringify(next)); fillIdentify(); renderAll(); nav('identify'); return true; };
 window.DKQualityInspection.getRecords = () => JSON.parse(JSON.stringify(records));
 window.DKQualityInspection.replaceRecords = (next) => {
   if(!Array.isArray(next)) return false;
