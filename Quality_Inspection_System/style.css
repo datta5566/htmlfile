@@ -36,3 +36,7 @@
 /* Phase 10: QR traceability */
 .qr-report{display:flex;gap:18px;align-items:center;flex-wrap:wrap}.qr-report textarea{min-width:280px;min-height:100px}.report-evidence-grid{break-inside:avoid}
 @media print{.qr-report textarea{border:0;min-height:70px}.qr-report{break-inside:avoid}}
+
+
+/* Phase 11: QR scan and retrieval */
+#traceabilityInput{width:100%;min-height:150px;resize:vertical}.trace-result{border:1px solid #d8e0ea;border-radius:12px;padding:14px;margin-top:14px;background:#fff;line-height:1.6}.trace-result.ready{border-color:#86efac}.trace-result.reject{border-color:#fca5a5}.trace-result b{font-size:1.05rem}
