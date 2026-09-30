@@ -100,3 +100,12 @@
 .professional-report #inspectionQr{flex-basis:180px}
 }
 @media(max-width:480px){.professional-report .report-grid{grid-template-columns:1fr}}
+
+
+/* Phase 20 print target correction: print the Professional Report, not Review */
+@media print{
+  body{background:#fff!important;color:#111!important}
+  .topbar,.tabs,.section-head,.section-head button,.hero,.hero button,.row button,.toolbar button,#dashboard,#identify,#drawing,#dimension,#process,#visual,#evidence,#review,#history,#backup,#traceability,#audit{display:none!important}
+  .tab#report{display:block!important}
+  .professional-report{display:block!important}
+}
