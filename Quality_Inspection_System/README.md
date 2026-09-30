@@ -24,6 +24,11 @@ Mobile-first Aluminium Formwork part inspection application.
 ## Source
 The implementation follows the uploaded Quality Inspection & Process Verification master requirement.
 
+## Phase 6 status
+Phase 6 implementation is complete on the `phase-6-final-approval-report` branch. Testing remains intentionally deferred until the final project testing stage.
+
+Phase 6 adds a structured final approval layer: Report No., Inspection Date, Quality Engineer/Approver, Final Decision and Approval Remark. The report header carries Inspection ID, Part and Drawing/Revision context. The system result remains PASS/REJECT/HOLD from the inspection gates, and a PASS approval requires the system result to be PASS plus Quality Engineer and inspection date. Print/PDF output is formatted for a report-oriented page.
+
 ## Phase 5 status
 Phase 5 implementation is complete on the `phase-5-visual-defect-evidence` branch. Testing remains intentionally deferred until final project testing.
 
