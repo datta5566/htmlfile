@@ -55,3 +55,9 @@ Open `Quality_Inspection_System/index.html` in a browser or serve the repository
 
 ## Android
 The existing `DK_PDI_Android` project already contains the native QR scanner bridge. This web build exposes the same `window.Android.startNativeScanner()` hook when packaged inside the Android WebView.
+
+
+## Phase 7 status
+Phase 7 is implemented on the `phase-7-dashboard-history-analytics` branch. Testing remains intentionally deferred until the final project testing stage.
+
+Added capabilities: dashboard pass/reject/hold totals, pass rate, open-defect count, status distribution, recent inspection summary, monthly inspection trend, searchable inspection history, status/unit/inspector/date filters, clear filters, open saved inspection, filtered CSV export and existing JSON backup. Analytics are calculated from the existing LocalStorage inspection records and do not change the Phase 1–6 inspection gates.
