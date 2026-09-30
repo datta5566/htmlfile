@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#07111f">
+<title>DK Quality Inspection System</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="login" class="login"><div class="login-card">
+<div class="logo">QI</div><div class="eyebrow">ALUMINIUM FORMWORK • QUALITY</div>
+<h1>Quality Inspection System</h1><p>Drawing + Process + Dimension + Visual + Traceability</p>
+<input id="loginName" placeholder="Inspector name"><button id="loginBtn" class="primary">Enter Inspection</button>
+</div></div>
+<div id="app" class="hidden">
+<header class="topbar"><div><b>DK QUALITY PRO</b><span>Part Quality Inspection & Process Verification</span></div>
+<div class="top-actions"><span id="saveState" class="pill">OFFLINE READY</span><button id="newInspection" class="ghost">New</button></div></header>
+<nav class="tabs">
+<button data-tab="dashboard" class="active">Dashboard</button><button data-tab="identify">1. Identify</button><button data-tab="drawing">2. Drawing</button><button data-tab="dimension">3. Dimensions</button><button data-tab="process">4. Process</button><button data-tab="visual">5. Visual</button><button data-tab="evidence">6. Evidence</button><button data-tab="review">7. Review</button><button data-tab="history">History</button>
+</nav>
+<main>
+<section id="dashboard" class="tab active"><div class="hero"><div><div class="eyebrow">FLOOR QUALITY CONTROL</div><h2>Inspection Dashboard</h2><p>Every mandatory process must be verified before final PASS.</p></div><button data-go="identify" class="primary big">Start Inspection</button></div>
+<div class="stats"><div><small>Total</small><b id="sTotal">0</b></div><div><small>PASS</small><b id="sPass">0</b></div><div><small>REJECT</small><b id="sReject">0</b></div><div><small>HOLD</small><b id="sHold">0</b></div></div>
+<div class="grid"><article class="card"><h3>Inspection rule</h3><p>Barcode ↔ Project ↔ Part ↔ Drawing ↔ Revision must match. Unreadable or uncertain drawing data becomes <b>Manual Verification Required</b>.</p></article>
+<article class="card"><h3>Current inspection</h3><div id="currentSummary">No inspection started.</div></article></div></section>
+
+<section id="identify" class="tab"><div class="section-head"><div><h2>Part Identification</h2><p>Scan or enter sticker information before inspection.</p></div><button data-go="drawing" class="primary">Continue →</button></div>
+<div class="grid"><article class="card"><h3>Sticker / QR</h3><div class="scanbox"><div class="scanline"></div><span>Camera scanner can be connected through the Android bridge.</span></div>
+<div class="row"><button id="nativeScan" class="primary">📷 Scan Sticker</button><button id="parseSticker" class="secondary">Parse Manual Data</button></div>
+<textarea id="stickerRaw" placeholder="Example: barcode$IPO$UNIT$KNEST$500$T$2400$PROJECT$AREA"></textarea></article>
+<article class="card"><h3>Verified Part Information</h3><div class="form-grid">
+<label>Project Number<input id="project"></label><label>Part Number<input id="partNumber"></label><label>Part Name<input id="partName"></label><label>Barcode<input id="barcode"></label><label>Drawing Number<input id="drawingNumber"></label><label>Drawing Revision<input id="drawingRevision"></label><label>Unit<input id="unit"></label><label>Inspector<input id="inspector"></label>
+</div><div id="mismatch" class="warning hidden">PART / DRAWING MISMATCH — resolve before inspection.</div></article></div></section>
+
+<section id="drawing" class="tab"><div class="section-head"><div><h2>Approved Drawing</h2><p>Upload PDF/image. If a value cannot be reliably read, do not guess.</p></div><button data-go="dimension" class="primary">Continue →</button></div>
+<div class="grid"><article class="card"><h3>Drawing File</h3><input id="drawingFile" type="file" accept=".pdf,image/*"><div id="drawingMeta" class="muted">No drawing uploaded.</div><div id="drawingPreview" class="drawing-preview"></div></article>
+<article class="card"><h3>Drawing Verification</h3><div class="checklist" id="drawingChecks"></div><button id="markDrawingHold" class="warning-btn">Mark Manual Verification Required</button></article></div></section>
+
+<section id="dimension" class="tab"><div class="section-head"><div><h2>Drawing / Dimension Inspection</h2><p>Actual values are compared automatically with nominal and tolerance.</p></div><button data-go="process" class="primary">Continue →</button></div>
+<article class="card"><div class="toolbar"><button id="addCharacteristic" class="secondary">+ Add Characteristic</button><span class="muted">Result: <b id="dimensionResult">PENDING</b></span></div>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>Characteristic</th><th>Nominal</th><th>Tolerance ±</th><th>Actual</th><th>Unit</th><th>Result</th><th>Remark</th><th></th></tr></thead><tbody id="dimensionBody"></tbody></table></div></article></section>
+
+<section id="process" class="tab"><div class="section-head"><div><h2>Process Verification</h2><p>Mandatory process completion blocks final PASS if incomplete.</p></div><button data-go="visual" class="primary">Continue →</button></div><article class="card"><div id="processBody" class="process-grid"></div></article></section>
+
+<section id="visual" class="tab"><div class="section-head"><div><h2>Manual / Visual Inspection</h2><p>Check physical quality against drawing and inspection specification.</p></div><button data-go="evidence" class="primary">Continue →</button></div><article class="card"><div id="visualBody" class="visual-grid"></div></article></section>
+
+<section id="evidence" class="tab"><div class="section-head"><div><h2>Photo Evidence & Defects</h2><p>Every evidence item is linked to this Inspection ID.</p></div><button data-go="review" class="primary">Final Review →</button></div><div class="grid"><article class="card"><h3>Photo Evidence</h3><label>Category<select id="photoCategory"><option>Part Overall Photo</option><option>Sticker Photo</option><option>Dimension Photo</option><option>Welding Photo</option><option>Defect Photo</option><option>Milling Photo</option><option>Punching Photo</option><option>Grinding Photo</option><option>Final Inspection Photo</option></select></label><input id="photoFile" type="file" accept="image/*" capture="environment"><div id="photoList"></div></article>
+<article class="card"><h3>Defect Record</h3><div class="form-grid"><label>Process<select id="defectProcess"><option>Cutting</option><option>Punching</option><option>Milling</option><option>Welding</option><option>Grinding</option><option>Cleaning</option><option>Lacquering</option><option>Final Inspection</option></select></label><label>Defect Type<input id="defectType"></label><label>Actual Condition<textarea id="defectActual"></textarea></label><label>Remark<textarea id="defectRemark"></textarea></label></div><button id="addDefect" class="danger">Create Defect</button><div id="defectList"></div></article></div></section>
+
+<section id="review" class="tab"><div class="section-head"><div><h2>Final Review</h2><p>PASS requires all mandatory conditions in the master requirement.</p></div><div class="result" id="finalResult">HOLD</div></div>
+<div class="grid"><article class="card"><h3>Gate Checks</h3><div id="gateChecks"></div></article><article class="card"><h3>Decision</h3><textarea id="finalRemark" placeholder="Final inspection remark"></textarea><div class="row"><button id="saveInspection" class="primary big">Save Inspection</button><button id="printReport" class="secondary big">Print / PDF</button></div><div id="reportId" class="muted"></div></article></div></section>
+
+<section id="history" class="tab"><div class="section-head"><div><h2>Inspection History</h2><p>Local-first records remain available without network.</p></div><button id="exportJson" class="secondary">Backup JSON</button></div><article class="card"><input id="historySearch" placeholder="Search barcode / project / part / inspection ID"><div id="historyList"></div></article></section>
+</main>
+</div>
+<script src="sticker-parser.js"></script><script src="app.js"></script>
+</body></html>
