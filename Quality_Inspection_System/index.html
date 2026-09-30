@@ -30,7 +30,7 @@
 <textarea id="stickerRaw" placeholder="Example: barcode$IPO$UNIT$KNEST$500$T$2400$PROJECT$AREA"></textarea></article>
 <article class="card"><h3>Verified Part Information</h3><div class="form-grid">
 <label>Project Number<input id="project"></label><label>Part Number<input id="partNumber"></label><label>Part Name<input id="partName"></label><label>Barcode<input id="barcode"></label><label>Drawing Number<input id="drawingNumber"></label><label>Drawing Revision<input id="drawingRevision"></label><label>Unit<input id="unit"></label><label>Inspector<input id="inspector"></label>
-</div><div id="mismatch" class="warning hidden">PART / DRAWING MISMATCH — resolve before inspection.</div></article></div></section>
+</div><div id="identityGate" class="gate">⛔ INSPECTION LOCKED — complete required identity fields.</div><div id="mismatch" class="warning hidden">PART / DRAWING MISMATCH — resolve before inspection.</div></article></div></section>
 
 <section id="drawing" class="tab"><div class="section-head"><div><h2>Approved Drawing</h2><p>Phase 2 — upload, view and verify the approved engineering drawing before measurement.</p></div><div class="row"><button id="clearDrawing" class="ghost">Clear</button><button data-go="dimension" class="primary">Continue →</button></div></div>
 <div class="grid"><article class="card"><h3>Drawing File</h3><input id="drawingFile" type="file" accept=".pdf,image/*"><div id="drawingMeta" class="muted">No drawing uploaded.</div><div id="drawingPreview" class="drawing-preview"></div><div class="warning">Do not use an unclear drawing for automatic approval. If data cannot be reliably read, keep the inspection on HOLD for manual verification.</div></article>
