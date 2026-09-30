@@ -66,7 +66,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   app?.addEventListener('input',()=>queueSave('input'),true);
   app?.addEventListener('change',()=>queueSave('change'),true);
   $('newInspection')?.addEventListener('click',()=>{clearDraft();setTimeout(refreshDraftControls,0)});
-  $('saveInspection')?.addEventListener('click',()=>{clearDraft();setTimeout(refreshDraftControls,0)});
   window.addEventListener('beforeunload',()=>saveDraft('page-exit'));
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveDraft('background')});
   addControls();
