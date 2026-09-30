@@ -77,3 +77,13 @@ Phase 8 adds a dedicated professional inspection report view with printable/PDF-
 - Corrects professional report measurement range/tolerance field mapping and visual/defect rendering.
 - Preserves the existing PASS / REJECT / HOLD safety gates.
 - Runtime/full testing remains intentionally deferred until the final testing phase.
+
+
+## Phase 10 — Drawing / Sticker / QR Traceability
+- Keeps the feature inside the same Quality Inspection System project.
+- Adds a structured inspection traceability QR payload containing Inspection ID, Project, Part Number, Barcode, Drawing and Revision.
+- Generates an inspection QR in the professional report and allows manual regeneration.
+- Stores QR payload and generation timestamp with the inspection record.
+- QR is intended for traceability/reference; it does not bypass existing inspection gates.
+- Uses the QRCode.js browser library for QR rendering.
+- Runtime/full testing remains deferred until the final testing phase.
