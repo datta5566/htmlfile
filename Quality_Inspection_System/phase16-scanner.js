@@ -66,6 +66,8 @@ function bind(){
  $('closeScanner')?.addEventListener('click',stop);$('stopScanner')?.addEventListener('click',stop);
  window.DKQualityInspection=window.DKQualityInspection||{};
  window.DKQualityInspection.handleCameraScan=nativeResult;
+ window.onQualityInspectionScanResult=nativeResult;
+ ['nativeScan','traceabilityScan'].forEach(id=>{const old=$(id);if(old){const fresh=old.cloneNode(true);old.replaceWith(fresh);$(id).addEventListener('click',e=>{e.preventDefault();start()})}});
  window.DKQualityInspection.setScannedBarcode=(barcode,raw)=>{
    if(window.currentInspection)window.currentInspection.barcode=barcode;
    $('barcode')&&( $('barcode').value=barcode );
