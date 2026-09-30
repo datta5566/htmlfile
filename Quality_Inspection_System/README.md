@@ -6,8 +6,12 @@ Mobile-first Aluminium Formwork part inspection application.
 - Inspector login/session name
 - Sticker/QR manual parsing with Android scanner bridge hook
 - Project/part/barcode/drawing/revision identity gate
+- Part ↔ drawing mapping gate; mismatched project/part/drawing/revision blocks final PASS
 - Approved drawing PDF/image upload and viewer
 - Drawing/manual verification hold state
+- Dynamic drawing characteristics: dimension, hole, milling, stiffener, position, angle and other
+- Drawing reference, nominal, tolerance, actual, unit, critical flag and result fields
+- Verified drawing text → characteristic builder with Manual Verification Required safety state
 - Dynamic dimension characteristics with nominal ± tolerance calculation
 - Cutting, Punching, Milling, Welding, Grinding, Cleaning, Lacquering and Final Inspection process gates
 - Manual/visual inspection checklist
@@ -19,6 +23,24 @@ Mobile-first Aluminium Formwork part inspection application.
 
 ## Source
 The implementation follows the uploaded Quality Inspection & Process Verification master requirement.
+
+## Phase 5 status
+Phase 5 implementation is complete on the `phase-5-visual-defect-evidence` branch. Testing remains intentionally deferred until final project testing.
+
+Phase 5 strengthens manual/visual inspection with per-checkpoint result, inspector, date and observation remark. Photo evidence now receives an evidence ID, category, filename, timestamp and inspector, with controlled removal. Defects capture reporter/time and include structured rework action, rework person, rework date and rework remark; a defect cannot move to RECHECK until required rework details are recorded. Visual inspection traceability is a separate final gate, while existing defect and photo history remains locally stored.
+
+## Phase 4 status
+Phase 4 implementation is complete on the `phase-4-process-traceability` branch. Testing remains intentionally deferred until the final project testing stage.
+
+Phase 4 adds structured manufacturing-process traceability for Cutting, Punching, Milling, Welding, Grinding, Cleaning, Lacquering / Surface Treatment and Final Inspection. Each process stores status, operator/employee, process date, machine/line, batch/job/lot and process remark. Completed processes must have the required traceability fields before final PASS; NOT APPLICABLE processes remain explicitly recorded. Existing older string-based process records are normalized when opened.
+
+## Phase 3 status
+Phase 3 implementation is complete on the `phase-3-measurement-inspection` branch. Testing remains intentionally deferred until the final project testing stage.
+
+Phase 3 adds measurement instrument/calibration capture, measurement method/remark, lower/upper tolerance display, completed-measurement progress, critical-characteristic progress, and a mandatory measurement-record gate.
+
+## Phase 2 status
+Phase 2 implementation is complete on the `phase-2-drawing-processing` branch. Full end-to-end testing is intentionally deferred until the final project testing stage.
 
 ## Important limitation
 The browser build displays uploaded drawings but does not silently infer unreadable dimensions. Drawing OCR/automatic dimension extraction and camera measurement assistance remain extension points; uncertain values must be manually verified.
