@@ -1,0 +1,17 @@
+name: Quality Inspection CI
+on:
+  push:
+    branches: [ quality-inspection-system ]
+  pull_request:
+    paths:
+      - Quality_Inspection_System/**
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node --check Quality_Inspection_System/app.js
+      - run: node --check Quality_Inspection_System/sticker-parser.js
