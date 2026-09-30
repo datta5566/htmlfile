@@ -7,3 +7,11 @@
 .process-fields input,.process-fields textarea{width:100%;box-sizing:border-box}.process-fields textarea{min-height:70px}
 @media(max-width:760px){.process-head{align-items:stretch;flex-direction:column}.process-head .status-select{width:100%}.process-fields{grid-template-columns:1fr 1fr}.process-fields .wide{grid-column:1/-1}}
 @media(max-width:480px){.process-fields{grid-template-columns:1fr}}
+
+/* Phase 5 — visual, defect and evidence traceability */
+.visual-card{border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;margin:12px 0;background:rgba(255,255,255,.025)}
+.visual-head{display:flex;justify-content:space-between;gap:14px;align-items:center}.visual-head select{min-width:160px}
+.visual-fields,.rework-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}.visual-fields textarea,.rework-fields textarea{min-height:64px}.visual-fields label:last-child,.rework-fields label:last-child{grid-column:1/-1}
+.photo-card img{max-width:100%;max-height:320px;object-fit:contain;display:block;margin:8px 0;border-radius:10px}.photo-card button{margin-top:6px}
+@media(max-width:760px){.visual-head{flex-direction:column;align-items:stretch}.visual-head select{width:100%}.visual-fields,.rework-fields{grid-template-columns:1fr 1fr}.visual-fields label:last-child,.rework-fields label:last-child{grid-column:1/-1}}
+@media(max-width:480px){.visual-fields,.rework-fields{grid-template-columns:1fr}.visual-fields label:last-child,.rework-fields label:last-child{grid-column:auto}}
