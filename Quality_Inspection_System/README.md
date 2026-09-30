@@ -107,3 +107,16 @@ Phase 8 adds a dedicated professional inspection report view with printable/PDF-
 - Restored records become available to Phase 11 QR / Sticker Traceability local lookup.
 - Existing inspection gates and decision logic are unchanged.
 - Runtime/full testing remains deferred until the final project testing phase.
+
+
+## Phase 13 — Cloud Sync Foundation
+- Keeps cloud synchronization inside the same Quality Inspection System project.
+- Adds an optional Cloud Sync screen for Supabase Project URL and anon/publishable key configuration.
+- Adds Push Local → Cloud, Pull Cloud → Local, and two-way sync controls.
+- Cloud records are keyed by Inspection ID.
+- Two-way merge preserves unrelated local records and uses the newer record timestamp when the same Inspection ID exists in both locations.
+- Adds `supabase/phase-13-cloud-sync.sql` as the database foundation.
+- No service-role secret is accepted or stored.
+- Authentication and role-based access are intentionally reserved for Phase 14.
+- Existing inspection gates and PASS/REJECT/HOLD decision logic are unchanged.
+- Runtime/full testing remains deferred until the final project testing phase.
