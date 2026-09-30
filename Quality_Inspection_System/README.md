@@ -133,3 +133,14 @@ Phase 8 adds a dedicated professional inspection report view with printable/PDF-
 - Role selection is intentionally local-only and is not secure authentication; server-enforced identity/access is required for production cloud security.
 - Existing inspection gates and PASS/REJECT/HOLD logic remain unchanged.
 - Runtime/full testing remains deferred until final project testing.
+
+
+## Phase 15 — Advanced Drawing OCR & Dimension Extraction
+- Adds browser-based Tesseract OCR for drawing-image text extraction.
+- Adds an OCR candidate panel inside the existing Drawing workflow.
+- Extracts only structured candidate dimensions such as nominal, tolerance and unit when recognizable.
+- OCR candidates remain explicitly marked for verification; uncertain OCR values cannot auto-PASS.
+- OCR text is written into the existing verified drawing-text area so the existing characteristic builder remains the controlled path.
+- PDF drawings continue through the existing drawing verification/manual extraction workflow; image OCR can be used when an image representation is available.
+- Existing drawing identity, measurement tolerance and HOLD rules remain unchanged.
+- Runtime/full testing remains deferred until final project testing.
