@@ -1,5 +1,5 @@
-const CACHE='dk-quality-phase20-v1';
-const CORE=['./','./index.html','./style.css','./app.js','./sticker-parser.js','./phase13-cloud-sync.js','./phase14-roles.js','./phase15-ocr.js','./phase16-scanner.js','./phase18-draft-recovery.js'];
+const CACHE='dk-quality-phase21-v1';
+const CORE=['./','./index.html','./style.css','./app.js','./sticker-parser.js','./phase13-cloud-sync.js','./phase14-roles.js','./phase15-ocr.js','./phase16-scanner.js','./phase18-draft-recovery.js','./phase21-pdf-ocr.js'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{

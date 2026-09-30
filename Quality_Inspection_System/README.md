@@ -204,3 +204,14 @@ Phase 8 adds a dedicated professional inspection report view with printable/PDF-
 - Versions the service-worker cache so the Phase 20 report CSS is not trapped behind the older Phase 18 cache.
 - No inspection decision logic, PASS / REJECT / HOLD gate, identity rule or measurement calculation was changed.
 - Runtime/full testing remains intentionally deferred until the final project testing stage.
+
+
+## Phase 21 — PDF Drawing Page Rendering & OCR Assist
+- Adds PDF.js-based page rendering for uploaded engineering drawing PDFs inside the same Drawing workflow.
+- Allows selecting and rendering individual drawing pages before OCR.
+- Runs Tesseract OCR against the rendered drawing page and places the extracted text into the existing drawing text workflow.
+- OCR output is explicitly assistive; extracted dimensions, tolerances, hole data and other engineering values remain candidates and require human verification before characteristics are built or PASS can be reached.
+- Failed/unavailable PDF rendering or OCR falls back to Manual Verification Required / HOLD rather than guessing.
+- Keeps the existing drawing identity, characteristic, measurement and PASS/REJECT/HOLD gates unchanged.
+- Versions the service-worker cache to include the Phase 21 script.
+- Runtime/full testing remains intentionally deferred until the final project testing phase.
