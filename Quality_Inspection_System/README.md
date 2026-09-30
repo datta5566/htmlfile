@@ -65,3 +65,15 @@ Added capabilities: dashboard pass/reject/hold totals, pass rate, open-defect co
 
 ## Phase 8 status
 Phase 8 adds a dedicated professional inspection report view with printable/PDF-ready sections for identification, summary, dimensions, process traceability, visual inspection, defects/rework and final approval. It uses the existing saved inspection record and does not introduce new inspection decision logic. Testing remains deferred until final project testing.
+
+
+## Phase 9 — Audit & Evidence Traceability
+- Keeps all inspection phases in the same Quality Inspection System project.
+- Adds audit metadata: created time/user, last updated time/user and record revision.
+- Adds unique photo evidence IDs with category, filename, inspector and timestamp.
+- Allows photo evidence removal before final save.
+- Adds photo evidence to the professional inspection report.
+- Records defect reporter/time and structured rework traceability in the report.
+- Corrects professional report measurement range/tolerance field mapping and visual/defect rendering.
+- Preserves the existing PASS / REJECT / HOLD safety gates.
+- Runtime/full testing remains intentionally deferred until the final testing phase.
