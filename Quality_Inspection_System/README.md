@@ -24,6 +24,11 @@ Mobile-first Aluminium Formwork part inspection application.
 ## Source
 The implementation follows the uploaded Quality Inspection & Process Verification master requirement.
 
+## Phase 3 status
+Phase 3 implementation is complete on the `phase-3-measurement-inspection` branch. Testing remains intentionally deferred until the final project testing stage.
+
+Phase 3 adds measurement instrument/calibration capture, measurement method/remark, lower/upper tolerance display, completed-measurement progress, critical-characteristic progress, and a mandatory measurement-record gate.
+
 ## Phase 2 status
 Phase 2 implementation is complete on the `phase-2-drawing-processing` branch. Full end-to-end testing is intentionally deferred until the final project testing stage.
 
