@@ -109,3 +109,12 @@
   .tab#report{display:block!important}
   .professional-report{display:block!important}
 }
+
+
+/* Phase 21 — PDF drawing OCR workspace */
+.phase21-pdf-tools{margin-top:12px;padding:12px;border:1px solid #26364b;border-radius:12px;background:rgba(7,17,31,.55)}
+.phase21-pdf-tools .row{flex-wrap:wrap;align-items:center}.phase21-pdf-tools select{min-width:110px}
+.pdf-ocr-canvas-wrap{margin-top:10px;max-height:520px;overflow:auto;border:1px solid #26364b;border-radius:10px;background:#050b14;text-align:center;padding:8px}
+.drawing-page-canvas{max-width:100%;height:auto;display:block;margin:auto}
+.pdf-ocr-output{white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto;margin:8px 0 0;padding:10px;background:#050b14;border-radius:8px}
+@media(max-width:700px){.pdf-ocr-canvas-wrap{max-height:420px}.phase21-pdf-tools .row>*{width:100%}.phase21-pdf-tools .row .pill{width:auto}}
