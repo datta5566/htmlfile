@@ -135,4 +135,18 @@ function buildTraceabilityPayload(){const p=current?.part||{},d=current?.drawing
  set('rSystemResult',status);set('rEngineer',a.qualityEngineer);set('rApprovedAt',a.approvedAt?new Date(a.approvedAt).toLocaleString():'—');set('rRemark',a.remark||x.remark);set('rAuditCreated',x.audit?.createdAt?new Date(x.audit.createdAt).toLocaleString():'—');set('rAuditUpdated',x.audit?.updatedAt?new Date(x.audit.updatedAt).toLocaleString():'—');set('rAuditBy',x.audit?.updatedBy||x.audit?.createdBy||'—');if($('rEvidence'))$('rEvidence').innerHTML=(x.photos||[]).map(q=>'<div class="report-evidence"><div><b>'+reportText(q.id)+'</b> • '+reportText(q.category)+'</div><small>'+reportText(q.name)+' • '+reportText(q.inspector)+' • '+reportText(q.addedAt)+'</small><img src="'+q.data+'"></div>').join('')||'<div class="muted">No photo evidence recorded.</div>';
 }
 
+
+window.DKQualityInspection = window.DKQualityInspection || {};
+window.DKQualityInspection.getRecords = () => JSON.parse(JSON.stringify(records));
+window.DKQualityInspection.replaceRecords = (next) => {
+  if(!Array.isArray(next)) return false;
+  records = next.filter(x=>x && typeof x==='object' && typeof x.id==='string');
+  saveLocal();
+  renderDashboard();
+  renderHistory();
+  renderProfessionalReport();
+  if(current) renderAll();
+  return true;
+};
+window.DKQualityInspection.refreshCloudViews = () => { renderDashboard(); renderHistory(); renderProfessionalReport(); };
 init();})();
