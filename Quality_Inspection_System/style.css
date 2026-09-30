@@ -40,3 +40,6 @@
 
 /* Phase 11: QR scan and retrieval */
 #traceabilityInput{width:100%;min-height:150px;resize:vertical}.trace-result{border:1px solid #d8e0ea;border-radius:12px;padding:14px;margin-top:14px;background:#fff;line-height:1.6}.trace-result.ready{border-color:#86efac}.trace-result.reject{border-color:#fca5a5}.trace-result b{font-size:1.05rem}
+
+/* Phase 14 — Roles & Permissions */
+.role-badge{display:inline-flex;align-items:center;padding:7px 10px;border:1px solid rgba(255,255,255,.14);border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.04em;margin-right:8px}.role-badge.inspector{color:#d8e7ff}.role-badge.quality_engineer{color:#bff7dc}.role-badge.admin{color:#ffe0a3}.role-locked{opacity:.55;cursor:not-allowed}.permission-grid{display:grid;grid-template-columns:2fr repeat(3,1fr);gap:1px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);border-radius:12px;overflow:hidden}.permission-grid>div{padding:9px 10px;background:#0b1626;font-size:12px}.permission-grid>div:nth-child(4n+2),.permission-grid>div:nth-child(4n+3),.permission-grid>div:nth-child(4n+4){text-align:center}@media(max-width:760px){.permission-grid{font-size:11px}.role-badge{margin-bottom:6px}}
