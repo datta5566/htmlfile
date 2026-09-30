@@ -24,6 +24,11 @@ Mobile-first Aluminium Formwork part inspection application.
 ## Source
 The implementation follows the uploaded Quality Inspection & Process Verification master requirement.
 
+## Phase 5 status
+Phase 5 implementation is complete on the `phase-5-visual-defect-evidence` branch. Testing remains intentionally deferred until final project testing.
+
+Phase 5 strengthens manual/visual inspection with per-checkpoint result, inspector, date and observation remark. Photo evidence now receives an evidence ID, category, filename, timestamp and inspector, with controlled removal. Defects capture reporter/time and include structured rework action, rework person, rework date and rework remark; a defect cannot move to RECHECK until required rework details are recorded. Visual inspection traceability is a separate final gate, while existing defect and photo history remains locally stored.
+
 ## Phase 4 status
 Phase 4 implementation is complete on the `phase-4-process-traceability` branch. Testing remains intentionally deferred until the final project testing stage.
 
