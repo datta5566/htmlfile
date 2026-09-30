@@ -69,4 +69,45 @@ function renderAll(){normalizeVisualRecords();fillDrawingFields();fillMeasuremen
 function renderDashboard(){if(current?.processes)processes.forEach(p=>current.processes[p]=processRecord(p));const c={PASS:0,REJECT:0,HOLD:0};records.forEach(x=>c[x.result]=(c[x.result]||0)+1);$('sTotal').textContent=records.length;$('sPass').textContent=c.PASS;$('sReject').textContent=c.REJECT;$('sHold').textContent=c.HOLD;$('currentSummary').innerHTML=current?'<b>'+esc(current.id)+'</b><br>'+esc(current.part.partName||'Part not identified')+'<br>'+esc(current.part.barcode||'No barcode'):'No inspection started.'}
 function renderHistory(){const q=($('historySearch')?.value||'').toLowerCase();const list=records.filter(x=>JSON.stringify(x).toLowerCase().includes(q)).slice().reverse();$('historyList').innerHTML=list.map(x=>'<div class="history-card"><div><b>'+esc(x.id)+'</b> <span class="'+x.result.toLowerCase()+'">'+x.result+'</span><br>'+esc(x.part.project||'')+' • '+esc(x.part.partName||'')+' • '+esc(x.part.barcode||'')+'<br><small>'+new Date(x.savedAt||x.createdAt).toLocaleString()+'</small></div><button class="secondary" data-open="'+esc(x.id)+'">Open</button></div>').join('')||'<div class="muted">No records.</div>';document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{current=records.find(x=>x.id===b.dataset.open);fillIdentify();renderAll();nav('review')})}
 function exportJson(){const blob=new Blob([JSON.stringify(records,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='quality-inspections-backup.json';a.click();URL.revokeObjectURL(a.href)}
+
+// ===== Phase 7: Dashboard / History / Analytics =====
+function phase7Filtered(){
+ const q=($('historySearch')?.value||'').trim().toLowerCase(),st=$('historyStatus')?.value||'',u=($('historyUnit')?.value||'').trim().toLowerCase(),ins=($('historyInspector')?.value||'').trim().toLowerCase(),from=$('historyFrom')?.value||'',to=$('historyTo')?.value||'';
+ return records.filter(x=>{const hay=[x.id,x.part?.project,x.part?.partNumber,x.part?.partName,x.part?.barcode,x.drawing?.drawingNumber,x.drawing?.revision,x.part?.unit,x.inspector].join(' ').toLowerCase();const d=String(x.savedAt||x.createdAt||'').slice(0,10);return (!q||hay.includes(q))&&(!st||(x.result||'HOLD')===st)&&(!u||String(x.part?.unit||'').toLowerCase().includes(u))&&(!ins||String(x.inspector||'').toLowerCase().includes(ins))&&(!from||d>=from)&&(!to||d<=to)}).sort((a,b)=>new Date(b.savedAt||b.createdAt)-new Date(a.savedAt||a.createdAt));
+}
+function renderDashboard(){
+ const c={PASS:0,REJECT:0,HOLD:0},months={},open=records.reduce((n,x)=>n+(x.defects||[]).filter(d=>d.status==='OPEN').length,0);
+ records.forEach(x=>{c[x.result||'HOLD']=(c[x.result||'HOLD']||0)+1;const d=new Date(x.savedAt||x.createdAt);if(!Number.isNaN(d.getTime())){const k=d.toISOString().slice(0,7);months[k]=(months[k]||0)+1}});
+ $('sTotal').textContent=records.length;$('sPass').textContent=c.PASS;$('sReject').textContent=c.REJECT;$('sHold').textContent=c.HOLD;
+ if($('sPassRate'))$('sPassRate').textContent=(records.length?Math.round(c.PASS/records.length*100):0)+'%';
+ if($('sOpenDefects'))$('sOpenDefects').textContent=open;
+ const total=records.length||1;
+ if($('statusAnalytics'))$('statusAnalytics').innerHTML=[['PASS',c.PASS,'pass'],['REJECT',c.REJECT,'reject'],['HOLD',c.HOLD,'hold']].map(x=>'<div class="analytics-row"><span>'+x[0]+'</span><div class="bar"><i class="'+x[2]+'" style="width:'+Math.round(x[1]/total*100)+'%"></i></div><b>'+x[1]+'</b></div>').join('');
+ const recent=records.slice().sort((a,b)=>new Date(b.savedAt||b.createdAt)-new Date(a.savedAt||a.createdAt)).slice(0,5);
+ if($('recentInspections'))$('recentInspections').innerHTML=recent.map(x=>'<div class="recent-item"><b>'+esc(x.id)+'</b><span>'+esc(x.part?.partName||'')+' • '+esc(x.result||'HOLD')+'</span></div>').join('')||'<span class="muted">No saved inspections.</span>';
+ const trend=Object.entries(months).sort().slice(-6),mx=Math.max(1,...trend.map(x=>x[1]));
+ if($('trendAnalytics'))$('trendAnalytics').innerHTML=trend.map(x=>'<div class="trend-row"><span>'+x[0]+'</span><div class="bar"><i style="width:'+Math.round(x[1]/mx*100)+'%"></i></div><b>'+x[1]+'</b></div>').join('')||'<span class="muted">No trend data.</span>';
+ if($('currentSummary'))$('currentSummary').innerHTML=current?'<b>'+esc(current.id)+'</b><br>'+esc(current.part.partName||'Part not identified')+'<br>'+esc(current.part.barcode||'No barcode'):'No inspection started.';
+}
+function renderHistory(){
+ const list=phase7Filtered();if($('historyCount'))$('historyCount').textContent=list.length+' records';
+ const old=$('historyList');if(old)old.innerHTML=list.map(x=>'<div class="history-card"><div><b>'+esc(x.id)+'</b> <span class="result-mini '+String(x.result||'HOLD').toLowerCase()+'">'+esc(x.result||'HOLD')+'</span><br>'+esc(x.part?.project||'')+' • '+esc(x.part?.partName||'')+' • '+esc(x.part?.barcode||'')+'<br><small>'+new Date(x.savedAt||x.createdAt).toLocaleString()+'</small></div><button class="secondary" data-open="'+esc(x.id)+'">Open</button></div>').join('')||'<div class="muted">No matching records.</div>';
+ document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{current=records.find(x=>x.id===b.dataset.open);fillIdentify();renderAll();nav('review')});
+}
+function clearHistoryFilters(){['historySearch','historyStatus','historyUnit','historyInspector','historyFrom','historyTo'].forEach(id=>{if($(id))$(id).value=''});renderHistory()}
+function exportHistoryCsv(){
+ const list=phase7Filtered();if(!list.length){alert('No filtered records to export.');return}
+ const h=['Inspection ID','Date','Project','Part Number','Part Name','Barcode','Drawing','Revision','Unit','Inspector','Result','Final Decision','Open Defects'];
+ const rows=list.map(x=>[x.id,String(x.savedAt||x.createdAt).slice(0,10),x.part?.project||'',x.part?.partNumber||'',x.part?.partName||'',x.part?.barcode||'',x.drawing?.drawingNumber||'',x.drawing?.revision||'',x.part?.unit||'',x.inspector||'',x.result||'HOLD',x.approval?.decision||'',(x.defects||[]).filter(d=>d.status==='OPEN').length]);
+ const csv=[h,...rows].map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\n'),blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='quality-inspection-history.csv';a.click();URL.revokeObjectURL(a.href);
+}
+function init(){
+ ['project','partNumber','partName','barcode','drawingNumber','drawingRevision'].forEach(k=>$(k).addEventListener('input',updateIdentityGate));
+ document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>nav(b.dataset.tab));document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>nav(b.dataset.go));
+ $('loginBtn').onclick=()=>{const n=$('loginName').value.trim();if(!n)return alert('Inspector name required');localStorage.setItem('dk_inspector',n);$('login').classList.add('hidden');$('app').classList.remove('hidden');startNew()};
+ $('newInspection').onclick=startNew;$('parseSticker').onclick=parseSticker;$('nativeScan').onclick=()=>{if(window.Android?.startNativeScanner)window.Android.startNativeScanner();else alert('Android scanner bridge available only in the Android build. Use manual sticker data here.')};
+ $('drawingFile').onchange=loadDrawing;['drawingProject','drawingPartNumber','drawingDrawingNumber','drawingRevision','drawingNotes','drawingExtractedText'].forEach(k=>$(k).addEventListener('input',syncDrawingFields));$('extractDrawing').onclick=extractDrawingText;$('clearDrawing').onclick=clearDrawing;$('buildCharacteristics').onclick=buildCharacteristicsFromVerifiedText;$('addCharacteristic').onclick=addDimension;['measurementInstrument','calibrationNo','measurementMethod','measurementRemark'].forEach(k=>$(k).addEventListener('input',syncMeasurementMeta));$('markDrawingHold').onclick=()=>{current.drawing.manual=true;renderDrawingChecks()};$('addDefect').onclick=addDefect;$('photoFile').onchange=addPhoto;$('saveInspection').onclick=saveInspection;$('printReport').onclick=()=>window.print();['reportNo','inspectionDate','qualityEngineer','approvalDecision','approvalRemark'].forEach(k=>$(k)?.addEventListener('input',syncApproval));$('exportJson').onclick=exportJson;
+ ['historySearch','historyStatus','historyUnit','historyInspector','historyFrom','historyTo'].forEach(id=>$(id)?.addEventListener('input',renderHistory));$('clearHistoryFilters').onclick=clearHistoryFilters;$('exportCsv').onclick=exportHistoryCsv;
+ renderDashboard();renderHistory();
+}
 init();})();
