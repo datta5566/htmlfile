@@ -120,3 +120,16 @@ Phase 8 adds a dedicated professional inspection report view with printable/PDF-
 - Authentication and role-based access are intentionally reserved for Phase 14.
 - Existing inspection gates and PASS/REJECT/HOLD decision logic are unchanged.
 - Runtime/full testing remains deferred until the final project testing phase.
+
+
+## Phase 14 — User Roles & Permissions
+- Adds Inspector, Quality Engineer and Admin workflow roles.
+- Adds a role badge and a permission matrix inside the same Quality Inspection System.
+- Inspector can execute inspection, measurements, process verification, visual/evidence capture, backup/report/traceability workflows.
+- Quality Engineer receives Inspector permissions plus final approval.
+- Admin receives all workflow, cloud and role-management permissions.
+- Final approval controls are locked for Inspector role.
+- Cloud Sync and Roles tabs are restricted to Admin in the Phase 14 browser workflow.
+- Role selection is intentionally local-only and is not secure authentication; server-enforced identity/access is required for production cloud security.
+- Existing inspection gates and PASS/REJECT/HOLD logic remain unchanged.
+- Runtime/full testing remains deferred until final project testing.
