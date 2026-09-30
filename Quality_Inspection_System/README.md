@@ -156,3 +156,15 @@ Phase 8 adds a dedicated professional inspection report view with printable/PDF-
 - If browser BarcodeDetector is unavailable, the existing Android/manual fallback remains available.
 - Camera stream is stopped after a successful scan or when the scanner is closed.
 - Testing remains deferred until final project testing.
+
+
+## Phase 17 — Offline / PWA Mobile Workflow
+- Adds an installable PWA manifest for the same Quality Inspection System.
+- Adds a service worker that caches the application shell for offline reopening after the first successful load.
+- Adds ONLINE / OFFLINE network status in the top bar.
+- Adds an Install App control when the browser exposes the PWA install prompt.
+- Keeps LocalStorage inspection history available when the network is unavailable.
+- Cloud Sync remains an online feature; offline mode does not pretend cloud data was synchronized.
+- External CDN resources such as Tesseract.js / QRCode.js may still require network access unless separately bundled; the offline shell is not treated as offline AI/OCR availability.
+- Existing inspection gates and PASS/REJECT/HOLD logic remain unchanged.
+- Runtime/full testing remains deferred until the final project testing phase.
