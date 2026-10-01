@@ -61,3 +61,57 @@
 
 /* Phase 19 — Inspection Audit Trail */
 .audit-timeline{display:grid;gap:10px}.audit-event{display:grid;grid-template-columns:14px 1fr;gap:12px;padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:#0b1626}.audit-event>div:last-child{min-width:0}.audit-dot{width:10px;height:10px;border-radius:50%;margin-top:5px;background:#7dd3fc;box-shadow:0 0 0 4px rgba(125,211,252,.08)}.audit-event b{display:block;font-size:12px}.audit-event small{display:block;color:#8ea0b7;margin-top:3px;font-size:10px}.audit-event p{margin:7px 0 0;color:#c8d3e1;font-size:12px;word-break:break-word}
+
+
+/* Phase 20 — Professional report print/layout hardening */
+.professional-report{overflow-wrap:anywhere;word-break:normal}
+.professional-report .table-wrap{width:100%;overflow-x:auto;overflow-y:visible}
+.professional-report table{width:100%;min-width:0;table-layout:fixed}
+.professional-report th,.professional-report td{vertical-align:top;overflow-wrap:anywhere;word-break:break-word}
+.professional-report .report-line{min-width:0;align-items:start}
+.professional-report .report-line>*{min-width:0;overflow-wrap:anywhere}
+.professional-report .report-evidence-grid{align-items:start}
+.professional-report .report-evidence{min-width:0;break-inside:avoid;page-break-inside:avoid}
+.professional-report .report-evidence img{max-width:100%;height:auto;display:block}
+.professional-report .qr-report{align-items:flex-start;break-inside:avoid;page-break-inside:avoid}
+.professional-report #inspectionQr{flex:0 0 180px;min-height:180px}
+.professional-report #qrPayload{flex:1 1 320px;min-width:0;box-sizing:border-box}
+@media print{
+.professional-report{width:100%;max-width:none;padding:8mm;overflow:visible}
+.professional-report h3{break-after:avoid-page;page-break-after:avoid}
+.professional-report .report-top,.professional-report .report-grid,.professional-report .report-summary,.professional-report .approval-box{break-inside:avoid;page-break-inside:avoid}
+.professional-report .table-wrap{overflow:visible}
+.professional-report table{font-size:8.5pt}
+.professional-report tr{break-inside:avoid;page-break-inside:avoid}
+.professional-report th,.professional-report td{padding:5px;line-height:1.25}
+.professional-report .report-line{break-inside:avoid;page-break-inside:avoid;grid-template-columns:2fr 1fr 2fr}
+.professional-report .report-evidence-grid{grid-template-columns:repeat(2,minmax(0,1fr));break-inside:auto}
+.professional-report .report-evidence{break-inside:avoid;page-break-inside:avoid}
+.professional-report .report-evidence img{max-height:150px}
+.professional-report .qr-report{break-inside:avoid;page-break-inside:avoid}
+.professional-report #qrPayload{min-height:70px;font-size:8pt}
+}
+@media(max-width:700px){
+.professional-report{padding:16px}
+.professional-report .report-grid{grid-template-columns:1fr 1fr}
+.professional-report .report-summary{grid-template-columns:1fr}
+.professional-report .report-line{grid-template-columns:1fr}
+.professional-report .qr-report{align-items:stretch}
+.professional-report #inspectionQr{flex-basis:180px}
+}
+@media(max-width:480px){.professional-report .report-grid{grid-template-columns:1fr}}
+
+
+/* Phase 20 print target correction: print the Professional Report, not Review */
+@media print{
+  body{background:#fff!important;color:#111!important}
+  .topbar,.tabs,.section-head,.section-head button,.hero,.hero button,.row button,.toolbar button,#dashboard,#identify,#drawing,#dimension,#process,#visual,#evidence,#review,#history,#backup,#traceability,#audit{display:none!important}
+  .tab#report{display:block!important}
+  .professional-report{display:block!important}
+}
+
+/* Phase 20 — KNEST Aluform final report reference layout */
+.professional-report{background:#fff;color:#18304d;border:1px solid #d6e0ea;border-radius:8px;padding:24px;max-width:1100px;margin:0 auto;font-family:Arial,Helvetica,sans-serif;box-shadow:0 8px 28px rgba(0,0,0,.12)}
+.kn-report-header{display:grid;grid-template-columns:74px 1fr 110px;gap:16px;align-items:center;border-bottom:3px solid #1d4f91;padding-bottom:12px}.kn-logo-mark{width:64px;height:64px;border:5px solid #1d4f91;border-radius:8px;display:grid;place-items:center;font-size:42px;font-weight:900;color:#1d4f91}.kn-company-name{font-size:30px;font-weight:900;color:#16457f;letter-spacing:.5px}.kn-report-title{font-size:25px;font-weight:800;margin-top:2px}.kn-department{font-size:17px;margin-top:4px}.kn-qr-wrap{display:flex;justify-content:center}.kn-header-meta{display:grid;grid-template-columns:1fr 1fr;gap:7px 40px;padding:12px 0 10px;font-size:14px}.kn-header-meta div,.kn-info-grid div,.kn-part-fields div{display:flex;gap:8px;min-width:0}.kn-header-meta b,.kn-info-grid b,.kn-part-fields b{min-width:120px}.kn-section-title{background:#dceafa;color:#16457f;font-size:18px;font-weight:800;padding:7px 12px;margin-top:10px;border-radius:3px}.kn-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 12px}.kn-part-info{display:grid;grid-template-columns:1fr 330px;gap:20px;padding:12px}.kn-part-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;align-content:start}.kn-part-visual{border:1px solid #aab7c5;min-height:150px;display:grid;place-items:center;text-align:center;padding:8px;overflow:hidden}.kn-part-visual img{max-width:100%;max-height:190px;object-fit:contain}.kn-part-visual small{word-break:break-word}.kn-report-table{border-collapse:collapse;width:100%;table-layout:fixed}.kn-report-table th{background:#eef5fb;color:#173a62}.kn-report-table th,.kn-report-table td{border:1px solid #b9c8d6;padding:7px 8px;font-size:12px;vertical-align:middle}.kn-measure-wrap th:nth-child(1){width:25%}.kn-measure-wrap th:nth-child(2){width:29%}.kn-measure-wrap th:nth-child(3){width:16%}.kn-measure-wrap th:nth-child(4){width:16%}.kn-measure-wrap th:nth-child(5){width:14%}.kn-check-wrap th:nth-child(1){width:34%}.kn-check-wrap th:nth-child(2){width:34%}.kn-check-wrap th:nth-child(3){width:32%}.kn-result-banner{border:2px solid #1c9b63;background:#effbf5;color:#168653;display:flex;justify-content:center;align-items:center;gap:10px;font-size:24px;font-weight:900;padding:10px;margin:14px 0}.kn-result-value{padding:4px 14px;border-radius:6px;color:#fff;background:#777}.kn-result-value.pass{background:#17965b}.kn-result-value.reject{background:#d63a3a}.kn-result-value.hold{background:#d79a20}.kn-approval-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:10px 12px}.kn-approval-grid>div{min-height:145px;border-right:1px solid #aeb9c5;padding-right:20px}.kn-approval-grid>div:last-child{border-right:0;padding-right:0}.kn-approval-grid h4{margin:0 0 10px;color:#173f70;font-size:16px}.kn-approval-grid p{display:grid;grid-template-columns:90px 1fr;margin:7px 0;font-size:13px}.kn-sign-line{border-top:1px solid #778899;margin-top:26px;padding-top:5px;color:#39495a}.kn-detail-title{margin-top:22px}.kn-part-info,.kn-info-grid,.kn-approval-grid{break-inside:avoid;page-break-inside:avoid}
+@media print{.professional-report{border:0;box-shadow:none;border-radius:0;padding:8mm;max-width:none}.kn-report-header{grid-template-columns:55px 1fr 90px}.kn-logo-mark{width:48px;height:48px;font-size:30px;border-width:4px}.kn-company-name{font-size:21px}.kn-report-title{font-size:18px}.kn-department{font-size:12px}.kn-header-meta,.kn-info-grid{font-size:10pt}.kn-section-title{font-size:13pt;padding:5px 8px}.kn-part-info{grid-template-columns:1fr 230px}.kn-part-fields{gap:6px 14px}.kn-part-visual{min-height:105px}.kn-report-table th,.kn-report-table td{font-size:8.5pt;padding:4px 5px}.kn-result-banner{font-size:17pt;padding:7px}.kn-approval-grid{font-size:9pt}}
+@media(max-width:700px){.professional-report{padding:14px}.kn-report-header{grid-template-columns:48px 1fr 70px}.kn-logo-mark{width:42px;height:42px;font-size:27px;border-width:3px}.kn-company-name{font-size:18px}.kn-report-title{font-size:15px}.kn-department{font-size:11px}.kn-header-meta,.kn-info-grid{grid-template-columns:1fr}.kn-part-info{grid-template-columns:1fr}.kn-part-fields{grid-template-columns:1fr}.kn-approval-grid{grid-template-columns:1fr}.kn-approval-grid>div{border-right:0;border-bottom:1px solid #aeb9c5;padding:0 0 12px}.kn-qr-wrap canvas{max-width:70px;height:auto!important}}

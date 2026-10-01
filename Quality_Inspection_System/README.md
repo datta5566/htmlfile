@@ -193,3 +193,14 @@ Phase 8 adds a dedicated professional inspection report view with printable/PDF-
 - This is local workflow traceability, not secure server-side audit logging; production security still requires authenticated server enforcement.
 - Existing inspection gates and PASS/REJECT/HOLD logic remain unchanged.
 - Runtime/full testing remains deferred until the final project testing phase.
+
+
+## Phase 20 — Professional Report Layout & Print Fix
+- Keeps all Phase 1–19 functionality inside the same Quality Inspection System project.
+- Fixes Professional Report print targeting so **Print / Save PDF** prints the Professional Report instead of the Final Review screen.
+- Hardens report tables against horizontal overflow and long-value collisions.
+- Prevents report rows, photo evidence cards, QR block, summary/header and approval blocks from splitting awkwardly across printed pages where supported by the browser.
+- Improves mobile report layout for summary, visual/defect rows and QR payload.
+- Versions the service-worker cache so the Phase 20 report CSS is not trapped behind the older Phase 18 cache.
+- No inspection decision logic, PASS / REJECT / HOLD gate, identity rule or measurement calculation was changed.
+- Runtime/full testing remains intentionally deferred until the final project testing stage.
